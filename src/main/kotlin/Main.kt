@@ -31,11 +31,11 @@ typealias P<R> = Parser<LambdaToken, R>
 
 object Grammar {
 
-	private val variable: P<Variable> = context("variable") {
+	private val variable: P<Variable> = context("var") {
 		isA(LambdaToken.Identifier).string.map(::Variable)
 	}
 
-	private val abstraction: P<Abstraction> = context("abstraction") {
+	private val abstraction: P<Abstraction> = context("abs") {
 		(
 				isA(LambdaToken.Lambda).void() +
 				isA(LambdaToken.Identifier).string +
@@ -47,15 +47,16 @@ object Grammar {
 		(term + term).map(::App)
 	}
 
-	private val parenTerm = context("parenthesis") {
+	private val parenTerm: P<Term> = context("paren") {
 		isA(LambdaToken.OpenParen).void() + term + isA(LambdaToken.ClosedParen).void()
 	}
 
-	// broken
-	private val term: P<Term> = parenTerm or app or abstraction or variable
+	private val term= context("term") {
+		parenTerm or app or abstraction or variable
+	}
 
 	val grammar = context("root") {
-		term + isA(LambdaToken.EOF).void()
+		(term + isA(LambdaToken.EOF).void()) // we have no backtracking, so if a term is found then no other possible terms are checked
 	}
 }
 

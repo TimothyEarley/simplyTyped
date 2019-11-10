@@ -30,17 +30,6 @@ sealed class ParserResult<Type:TokenType, out R> {
 		data class Multiple<Type : TokenType>(
 			val errors: Set<Single<Type>> // all with the same line/col
 		) : Error<Type>() {
-//			override fun compareTo(other: Error<Type, T>): Int {
-//				val actual = errors.first().actual!!
-//				val otherActual = when (other) {
-//					is LeftRecursion -> other.atToken
-//					is Single -> other.actual
-//					is Multiple -> other.errors.first().actual!!
-//				}
-//
-//				return compareBy<T>({it.line}, {it.col}).compare(actual, otherActual)
-//			}
-
 			override fun toString(): String =
 				"Multiple errors: Found ${errors.first().actual} but expected one of: \n${errors.joinToString(separator = "\n", transform = {
 					"- In context ${it.context.name}: ${it.expected} ${if (it.expectedValue != null) "with value ${it.expectedValue}" else ""}"
@@ -69,21 +58,20 @@ private fun ParserResult.Error<*>.getActual() = when (this) {
 	is ParserResult.Error.Single -> actual
 	is ParserResult.Error.Multiple -> errors.first().actual
 }
-private val ErrorComparator : Comparator<ParserResult.Error<*>> = Comparator<ParserResult.Error<*>> { a, b ->
+private val ErrorComparator : Comparator<ParserResult.Error<*>> = Comparator { a, b ->
 	val aa = a.getActual()
 	val ab = b.getActual()
 	compareBy<Token<*>>({it.line}, {it.col}).compare(aa, ab)
 }
 
-infix fun <Type:TokenType, T:Token<Type>> ParserResult.Error<Type>.neither(other: ParserResult.Error<Type>): ParserResult.Error<Type> =
+infix fun <Type:TokenType> ParserResult.Error<Type>.neither(other: ParserResult.Error<Type>): ParserResult.Error<Type> =
 	when (ErrorComparator.compare(this, other)) {
-		in 1..Int.MAX_VALUE -> other
+		in 1..Int.MAX_VALUE -> this
 		0 -> this merge other
-		else -> this
+		else -> other
 	}
 
-
-private infix fun <Type:TokenType, T:Token<Type>> ParserResult.Error<Type>.merge(other: ParserResult.Error<Type>): ParserResult.Error<Type> =
+private infix fun <Type:TokenType> ParserResult.Error<Type>.merge(other: ParserResult.Error<Type>): ParserResult.Error<Type> =
 	ParserResult.Error.Multiple(
 		errors = when (this) {
 			is ParserResult.Error.LeftRecursion -> emptySet() //TODO think about it
@@ -96,17 +84,12 @@ private infix fun <Type:TokenType, T:Token<Type>> ParserResult.Error<Type>.merge
 		}
 	)
 
-
-//	listOf(this, other).maxWith(
-//		compareBy({ it.actual?.line }, { it.actual?.col})
-//	)!!
-
-infix fun <Type:TokenType, T:Token<Type>> ParserResult.Error<Type>?.nneither(other: ParserResult.Error<Type>) = when (this) {
+infix fun <Type:TokenType> ParserResult.Error<Type>?.nneither(other: ParserResult.Error<Type>) = when (this) {
 	null -> other
 	else -> this neither other
 }
 
-fun <Type:TokenType, T:Token<Type>, R, A> ParserResult<Type, R>.fold(
+fun <Type:TokenType, R, A> ParserResult<Type, R>.fold(
 	left: (ParserResult.Error<Type>) -> A,
 	right: (ParserResult.Ok<Type, R>) -> A ): A = when (this) {
 	is ParserResult.Ok -> right(this)

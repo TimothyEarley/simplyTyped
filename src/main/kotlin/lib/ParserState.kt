@@ -5,70 +5,51 @@ package lib
  */
 class ParserState<Type: TokenType> private constructor(
 	private val tokens: TokenStream<Type>,
-	//TODO read the paper as to what chains actually do
-	private val chain: List<Parser<Type, Any?>> = emptyList(),
-	private val memo: Map<Parser<Type, Any?>, Map<Token<Type>, ParserResult<Type, Any?>>> = emptyMap(),
+	val memo: Memo<Type>,
+	val chain: List<Parser<Type, *>>,
 	private val skippedError: ParserResult.Error<Type>? = null
 ) {
+	val head: Token<Type>? get() = tokens.head
 
-	fun token(): Token<Type>? {
-		return tokens.head
+	companion object {
+		fun <Type: TokenType> of(tokens: TokenStream<Type>) =
+			ParserState(tokens, Memo(), emptyList())
 	}
 
 	fun ParserContext.match(type: Type): ParserResult<Type, Token<Type>> {
-		val head = tokens.head
+		val head = head
 		return when (head?.type) {
 			type -> ParserResult.Ok(this@ParserState.nextState(), head)
 			else -> skippedError nneither ParserResult.Error.Single(this, type, null, head)
 		}
 	}
 
-	private fun nextState(): ParserState<Type> = ParserState(
-		tokens = tokens.tail,
-		memo = memo,
-		skippedError = skippedError
-	)
-
 	fun addSkippedError(e: ParserResult.Error<Type>): ParserState<Type> =
 		ParserState(
 			tokens = tokens,
+			skippedError = skippedError nneither e,
 			memo = memo,
-			skippedError = skippedError nneither e
+			chain = chain
 		)
 
-	// get the memoized result from the parser, if any.
-	@Suppress("UNCHECKED_CAST") // we make sure it is type safe in [writeMemo]
-	fun <R> readMemo(parser: Parser<Type, R>, atToken: Token<Type>): ParserResult<Type, R>? {
-		return memo[parser]?.get(atToken) as? ParserResult<Type, R>
-	}
+	fun addToChain(parser: Parser<Type, *>) = ParserState(
+		tokens = tokens,
+		skippedError = skippedError,
+		memo = memo,
+		chain = chain + parser
+	)
 
-	// mark the parser as failed
-	fun <R> writeMemo(parser: Parser<Type, R>, atToken: Token<Type>, result: ParserResult<Type, R>) = //TODO check if already contains
-		ParserState(
-			tokens = tokens,
-			chain = chain + parser,
-			memo = memo.toMutableMap().also {
-				it.merge(parser, mapOf(atToken to result)) { old, new ->
-					old + new
-				}
-			},
-			skippedError = skippedError
-		)
+	private fun nextState(): ParserState<Type> = ParserState(
+		tokens = tokens.tail,
+		skippedError = skippedError,
+		memo = memo,
+		chain = chain
+	)
 
-	// check if the chain is different from the last call
-	fun differentChain(parser: Parser<Type, *>): Boolean {
-		if (chain.isEmpty()) return true
-		val prev = chain.last()
-
-		// find this parser the last time it was used
-		val lastTime = chain.indexOfLast { it == parser }
-		val lastTimePrev = chain.getOrNull(lastTime - 1) ?: return true
-
-		return lastTimePrev != prev
-	}
-
-	companion object {
-		fun <Type: TokenType> of(tokens: TokenStream<Type>) =
-			ParserState(tokens)
-	}
+	fun setChain(newChain: List<Parser<Type, *>>): ParserState<Type> = ParserState(
+		tokens = tokens,
+		skippedError = skippedError,
+		memo = memo,
+		chain = newChain
+	)
 }
