@@ -1,5 +1,7 @@
 import Term.*
 import lib.*
+import java.lang.Exception
+import java.lang.IllegalStateException
 
 // λ
 
@@ -10,21 +12,10 @@ enum class LambdaToken(r: String): TokenType {
 	OpenParen("\\("),
 	ClosedParen("\\)"),
 	Colon(":"),
-	EOF("");
+	WS("\\s"),
+	EOF("\\z"); //TODO better EOF handling
 
 	override val regex = Regex(r)
-}
-
-sealed class Term {
-	data class Variable(val name: String): Term() {
-		override fun toString(): String = name
-	}
-	data class Abstraction(val binder: String, val body: Term): Term() {
-		override fun toString(): String = "(λ$binder.$body)"
-	}
-	data class App(val left: Term, val right: Term): Term() {
-		override fun toString(): String = "($left $right)"
-	}
 }
 
 typealias P<R> = Parser<LambdaToken, R>
@@ -56,16 +47,75 @@ object Grammar {
 	}
 
 	val grammar = context("root") {
-		(term + isA(LambdaToken.EOF).void()) // we have no backtracking, so if a term is found then no other possible terms are checked
+		(term plusBacktrack isA(LambdaToken.EOF).void()).map { term, _ -> term } // we have no backtracking, so if a term is found then no other possible terms are checked
+	}
+}
+
+fun parse(src: String): ParserResult<LambdaToken, Term> {
+	val tokens = lex(src, LambdaToken.values(), LambdaToken.EOF)
+		.filter { it.type != LambdaToken.WS }
+	return Grammar.grammar.run(tokens) // { println(it)}
+}
+
+private fun examples() {
+	listOf(
+		"λx.x",
+		"(λx.x)(λx.x)",
+		"(λx.x)(λy.y)(λz.z)",
+		"(λx. λy. x) (λy. y) (λx. x)",
+		"λx.λy.x"
+	).forEach {
+		print(it)
+		val parsed = parse(it).orThrow()
+		print(" ~> ")
+		println(parsed.toNameless().eval().toNamed())
 	}
 }
 
 fun main() {
-	val lexed = lex("(λx.x)(λy.y)(λz.z)", LambdaToken.values(), LambdaToken.EOF)
-	println("Lexed: ")
-	println(lexed.toList().map { it.type })
-	val parsed = Grammar.grammar.run(lexed)
 
-	println(parsed)
+	val zero = "(λs.λz.z)"
+	val succ = "(λn.λs.λz.s(n s z))"
+
+	val two = "$succ ($succ $zero)"
+
+	val matches = mapOf(
+		parse(zero).orThrow() to "zero",
+		parse(succ).orThrow() to "succ",
+		parse(two).orThrow() to "two"
+	)
+
+	println(parse(two))
+	println(two.eval())
+	println(two.eval().matchAll(matches))
 
 }
+
+
+private fun String.eval(): Term = parse(this)
+	.orThrow()
+	.toNameless()
+	.eval()
+	.toNamed()
+
+private fun Term.matchAll(map: Map<Term, String>): Term =
+	map.entries.fold(this) { acc, (term, name) ->
+		acc.match(term, name)
+	}
+
+private fun Term.match(term: Term, name: String): Term =
+	if (this.alphaEqual(term)) Variable(name)
+	else when (this) {
+		is Variable -> this
+		is Abstraction -> Abstraction(binder, body.match(term, name))
+		is App -> App(left.match(term, name), right.match(term, name))
+}
+
+private fun Term.alphaEqual(other: Term): Boolean =
+	if (this === other) true
+	else if (this is Variable && other is Variable) true // can always rename variables
+	else try {
+		this.toNameless() == other.toNameless()
+	} catch (e: IllegalStateException) {
+		false
+	}

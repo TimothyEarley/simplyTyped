@@ -5,8 +5,13 @@ package lib
  */
 inline class ParserContext(val name: String)
 
-fun <Type : TokenType, R, P : Parser<Type, R>> context(name: String, block: ParserContext.() -> P): Parser<Type, R> = LazyParser(
-	lazy {
-		ParserContext(name).run(block)::apply
-	}, name
-)
+fun <Type : TokenType, R, P : Parser<Type, R>> context(name: String, block: ParserContext.() -> P): Parser<Type, R> {
+	val parser by kotlin.lazy {
+		ParserContext(name).run(block)
+	}
+	return LazyParser(
+		kotlin.lazy { parser::apply },
+		{ parser.backtrack() },
+		{name}
+	)
+}

@@ -1,19 +1,21 @@
 package lib
 
+typealias Writer = (() -> String) -> Unit
 /**
  * Input to a parser
  */
 class ParserState<Type: TokenType> private constructor(
 	private val tokens: TokenStream<Type>,
-	val memo: Memo<Type>,
+	val memo: Memo<Type>, // constant
+	val writer: Writer, // constant
 	val chain: List<Parser<Type, *>>,
 	private val skippedError: ParserResult.Error<Type>? = null
 ) {
 	val head: Token<Type>? get() = tokens.head
 
 	companion object {
-		fun <Type: TokenType> of(tokens: TokenStream<Type>) =
-			ParserState(tokens, Memo(), emptyList())
+		fun <Type: TokenType> of(tokens: TokenStream<Type>, writer: Writer) =
+			ParserState(tokens, Memo(), writer, emptyList())
 	}
 
 	fun ParserContext.match(type: Type): ParserResult<Type, Token<Type>> {
@@ -29,6 +31,7 @@ class ParserState<Type: TokenType> private constructor(
 			tokens = tokens,
 			skippedError = skippedError nneither e,
 			memo = memo,
+			writer = writer,
 			chain = chain
 		)
 
@@ -36,6 +39,7 @@ class ParserState<Type: TokenType> private constructor(
 		tokens = tokens,
 		skippedError = skippedError,
 		memo = memo,
+		writer = writer,
 		chain = chain + parser
 	)
 
@@ -43,6 +47,7 @@ class ParserState<Type: TokenType> private constructor(
 		tokens = tokens.tail,
 		skippedError = skippedError,
 		memo = memo,
+		writer = writer,
 		chain = chain
 	)
 
@@ -50,6 +55,7 @@ class ParserState<Type: TokenType> private constructor(
 		tokens = tokens,
 		skippedError = skippedError,
 		memo = memo,
+		writer = writer,
 		chain = newChain
 	)
 }

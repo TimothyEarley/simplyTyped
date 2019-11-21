@@ -17,6 +17,10 @@ sealed class ParserResult<Type:TokenType, out R> {
 			val atToken: Token<Type>?
 		) : Error<Type>()
 
+		data class NoChoice<Type : TokenType>(
+			val atToken: Token<Type>?
+		) : Error<Type>()
+
 		data class Single<Type : TokenType>(
 			val context: ParserContext,
 			val expected: Type,
@@ -55,6 +59,7 @@ fun <Type:TokenType, T:Token<Type>, A> ParserResult<Type, A>.flatMapLeft(f: (Par
 
 private fun ParserResult.Error<*>.getActual() = when (this) {
 	is ParserResult.Error.LeftRecursion -> atToken
+	is ParserResult.Error.NoChoice -> atToken
 	is ParserResult.Error.Single -> actual
 	is ParserResult.Error.Multiple -> errors.first().actual
 }
@@ -71,17 +76,15 @@ infix fun <Type:TokenType> ParserResult.Error<Type>.neither(other: ParserResult.
 		else -> other
 	}
 
+private fun <Type:TokenType> ParserResult.Error<Type>.extractErrorSet() = when (this) {
+	is ParserResult.Error.LeftRecursion, is ParserResult.Error.NoChoice -> emptySet() //TODO think about it
+	is ParserResult.Error.Single -> setOf(this)
+	is ParserResult.Error.Multiple -> this.errors
+}
+
 private infix fun <Type:TokenType> ParserResult.Error<Type>.merge(other: ParserResult.Error<Type>): ParserResult.Error<Type> =
 	ParserResult.Error.Multiple(
-		errors = when (this) {
-			is ParserResult.Error.LeftRecursion -> emptySet() //TODO think about it
-			is ParserResult.Error.Single -> setOf(this)
-			is ParserResult.Error.Multiple -> this.errors
-		} + when (other) {
-			is ParserResult.Error.LeftRecursion -> emptySet()
-			is ParserResult.Error.Single -> setOf(other)
-			is ParserResult.Error.Multiple -> other.errors
-		}
+		errors = this.extractErrorSet() + other.extractErrorSet()
 	)
 
 infix fun <Type:TokenType> ParserResult.Error<Type>?.nneither(other: ParserResult.Error<Type>) = when (this) {

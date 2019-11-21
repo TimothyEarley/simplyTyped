@@ -12,8 +12,8 @@ private class IteratorTokenStream<T:TokenType> (
 	private val index: Int,
 	private val cache: MutableList<Token<T>>
 ) : TokenStream<T> {
-	override val head: Token<T>? by lazy { get(index) }
-	override val tail: TokenStream<T> by lazy {
+	override val head: Token<T>? by kotlin.lazy { get(index) }
+	override val tail: TokenStream<T> by kotlin.lazy {
 		IteratorTokenStream(iterator, index + 1, cache)
 	}
 
@@ -37,7 +37,7 @@ fun <T : TokenType> Sequence<Token<T>>.toTokenStream(): TokenStream<T> = Iterato
 )
 
 fun <T : TokenType> TokenStream<T>.filter(p: (Token<T>) -> Boolean): TokenStream<T> = object : TokenStream<T> {
-	private val headTail: Pair<Token<T>?, TokenStream<T>> by lazy {
+	private val headTail: Pair<Token<T>?, TokenStream<T>> by kotlin.lazy {
 		val originalHead = this@filter.head
 		when {
 			originalHead == null -> null to this@filter.tail
@@ -49,8 +49,8 @@ fun <T : TokenType> TokenStream<T>.filter(p: (Token<T>) -> Boolean): TokenStream
 		}
 	}
 
-	override val head: Token<T>? by lazy { headTail.first	}
-	override val tail: TokenStream<T> by lazy { headTail.second	}
+	override val head: Token<T>? by kotlin.lazy { headTail.first	}
+	override val tail: TokenStream<T> by kotlin.lazy { headTail.second	}
 }
 
 // for debug
