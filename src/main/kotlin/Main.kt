@@ -35,7 +35,7 @@ object Grammar {
 		).map(::Abstraction)
 	}
 	private val app: P<App> = context("app") {
-		(term + term).map(::App)
+		((parenTerm or variable) + (parenTerm or variable)).map(::App)
 	}
 
 	private val parenTerm: P<Term> = context("paren") {
@@ -43,27 +43,27 @@ object Grammar {
 	}
 
 	private val term= context("term") {
-		parenTerm or app or abstraction or variable
+		app or parenTerm or abstraction or variable
 	}
 
 	val grammar = context("root") {
-		(term plusBacktrack isA(LambdaToken.EOF).void()).map { term, _ -> term } // we have no backtracking, so if a term is found then no other possible terms are checked
+		(term + isA(LambdaToken.EOF).void()) //.map { term, _ -> term } // we have no backtracking, so if a term is found then no other possible terms are checked
 	}
 }
 
-fun parse(src: String): ParserResult<LambdaToken, Term> {
-	val tokens = lex(src, LambdaToken.values(), LambdaToken.EOF)
+fun parse(src: String, debug: Boolean = false): ParserResult<LambdaToken, Term> {
+	val tokens = lex("($src)", LambdaToken.values(), LambdaToken.EOF)
 		.filter { it.type != LambdaToken.WS }
-	return Grammar.grammar.run(tokens) // { println(it)}
+	return Grammar.grammar.run(tokens, debug)
 }
 
 private fun examples() {
 	listOf(
 		"λx.x",
-		"(λx.x)(λx.x)",
-		"(λx.x)(λy.y)(λz.z)",
-		"(λx. λy. x) (λy. y) (λx. x)",
-		"λx.λy.x"
+		"(λx.x) (λx.x)",
+		"((λx.x) (λy.y)) (λz.z)",
+		"((λx. λy. x) (λy. y)) (λx. x)",
+		"λx.(λy.x)"
 	).forEach {
 		print(it)
 		val parsed = parse(it).orThrow()
@@ -75,7 +75,7 @@ private fun examples() {
 fun main() {
 
 	val zero = "(λs.λz.z)"
-	val succ = "(λn.λs.λz.s(n s z))"
+	val succ = "(λn.λs.λz.s ((n s) z))"
 
 	val two = "($succ ($succ $zero))"
 

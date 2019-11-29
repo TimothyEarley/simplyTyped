@@ -1,5 +1,7 @@
 package lib
 
+import lib.combinators.MapParser
+
 private typealias ParseFunction<Type, R> = ParserState<Type>.() -> ParserResult<Type, R>
 
 interface Parser<Type : TokenType, out R> {
@@ -25,10 +27,14 @@ fun <Type: TokenType, R> Parser<Type, R>.applyRule(
 //		updatedState.chain
 //			.joinToString(separator = " -> ", transform = { it.name }) + " at $head"
 //	}
+
 	state.writer {
 		"Token: $head\n" + updatedState.toTree().toString()
 	}
-	readLine()
+	state.writer {
+		readLine()
+		""
+	}
 
 	val cached = memo.read(this, head)
 
@@ -100,5 +106,8 @@ private fun <Type : TokenType> isDifferentContextOfDepth(chain: List<Parser<Type
 }
 
 //TODO make writer pure?
-fun <Type: TokenType, R> Parser<Type, R>.run(tokens: TokenStream<Type>, writer: Writer = {}): ParserResult<Type, R>
+fun <Type: TokenType, R> Parser<Type, R>.run(tokens: TokenStream<Type>, debug: Boolean = false): ParserResult<Type, R>
+		= run(tokens, if (debug) { fun(s:() -> String) = println(s()) } else {{}})
+
+private fun <Type: TokenType, R> Parser<Type, R>.run(tokens: TokenStream<Type>, writer: Writer = {}): ParserResult<Type, R>
 		= this.applyRule(ParserState.of(tokens, writer))

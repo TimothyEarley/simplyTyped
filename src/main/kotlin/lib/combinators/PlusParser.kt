@@ -30,6 +30,8 @@ class PlusParser<Type : TokenType, A, B>(
 	}
 }
 
+//TODO better parser names
+
 operator fun <Type : TokenType, A, B> Parser<Type, A>.plus(
 	next: Parser<Type, B>
 ): Parser<Type, Pair<A, B>> = PlusParser(this, next)
