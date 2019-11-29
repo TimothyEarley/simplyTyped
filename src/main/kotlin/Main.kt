@@ -1,6 +1,6 @@
 import Term.*
 import lib.*
-import java.lang.Exception
+import lib.combinators.*
 import java.lang.IllegalStateException
 
 // λ
@@ -77,7 +77,7 @@ fun main() {
 	val zero = "(λs.λz.z)"
 	val succ = "(λn.λs.λz.s(n s z))"
 
-	val two = "$succ ($succ $zero)"
+	val two = "($succ ($succ $zero))"
 
 	val matches = mapOf(
 		parse(zero).orThrow() to "zero",
