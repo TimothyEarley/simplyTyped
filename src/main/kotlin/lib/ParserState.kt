@@ -26,6 +26,12 @@ class ParserState<Type: TokenType> private constructor(
 		}
 	}
 
+	fun ParserContext.match(type: Type, value: String): ParserResult<Type, Token<Type>> {
+		val head = head
+		return if (head?.type == type && head.value == value) ParserResult.Ok(this@ParserState.nextState(), head)
+		else skippedError nneither ParserResult.Error.Single(this, type, value, head)
+	}
+
 	fun addSkippedError(e: ParserResult.Error<Type>): ParserState<Type> =
 		ParserState(
 			tokens = tokens,

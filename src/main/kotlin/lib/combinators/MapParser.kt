@@ -16,3 +16,6 @@ fun <Type : TokenType, A, B> Parser<Type, A>.map(f: (A) -> B): Parser<Type, B>
 
 fun <Type : TokenType, A, B, C> Parser<Type, Pair<A, B>>.map(f: (A, B) -> C): Parser<Type, C>
 		= MapParser(this) { f(it.first, it.second) }
+
+fun <Type : TokenType, A, B, C, D> Parser<Type, Pair<Pair<A, B>, C>>.map(f: (A, B, C) -> D): Parser<Type, D>
+		= MapParser(this) { f(it.first.first, it.first.second, it.second) }

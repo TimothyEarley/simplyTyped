@@ -1,4 +1,6 @@
-import Term.*
+package untyped
+
+import untyped.Term.*
 import lib.*
 import lib.combinators.*
 import java.lang.IllegalStateException
@@ -11,7 +13,6 @@ enum class LambdaToken(r: String): TokenType {
 	Dot("\\."),
 	OpenParen("\\("),
 	ClosedParen("\\)"),
-	Colon(":"),
 	WS("\\s"),
 	EOF("\\z"); //TODO better EOF handling
 
@@ -31,7 +32,7 @@ object Grammar {
 				isA(LambdaToken.Lambda).void() +
 				isA(LambdaToken.Identifier).string +
 				isA(LambdaToken.Dot).void() +
-				term
+						term
 		).map(::Abstraction)
 	}
 	private val app: P<App> = context("app") {
@@ -39,7 +40,9 @@ object Grammar {
 	}
 
 	private val parenTerm: P<Term> = context("paren") {
-		isA(LambdaToken.OpenParen).void() + term + isA(LambdaToken.ClosedParen).void()
+		isA(LambdaToken.OpenParen).void() + term + isA(
+			LambdaToken.ClosedParen
+		).void()
 	}
 
 	private val term= context("term") {

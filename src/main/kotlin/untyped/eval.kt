@@ -1,4 +1,6 @@
-import NamelessTerm.*
+package untyped
+
+import untyped.NamelessTerm.*
 
 fun NamelessTerm.eval(): NamelessTerm {
 	var current = this

@@ -1,4 +1,6 @@
-import NamelessTerm.*
+package untyped
+
+import untyped.NamelessTerm.*
 
 sealed class Term {
 	data class Variable(val name: String): Term() {
