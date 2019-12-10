@@ -25,7 +25,7 @@ class MatchParser<Type : TokenType>(
 	val type: Type,
 	val value: String
 ): Parser<Type, Token<Type>> {
-	override val name: String = "isA<$type>"
+	override val name: String = "isAMatch<$type,$value>"
 
 	override fun eval(state: ParserState<Type>): ParserResult<Type, Token<Type>> = with(state) {
 		context.match(type, value)

@@ -49,7 +49,7 @@ fun <Type: TokenType, R> Parser<Type, R>.applyRule(
 	return if (cached == null) {
 		execute()
 	} else {
-		if (cached is ParserResult.Error.LeftRecursion && isDifferentContextOfDepth(updatedState.chain, 10)) {
+		if (cached is ParserResult.Error.LeftRecursion && isDifferentContextOfDepth(updatedState.chain, 1)) {
 			execute()
 		} else {
 			if (cached is ParserResult.Error.LeftRecursion) {

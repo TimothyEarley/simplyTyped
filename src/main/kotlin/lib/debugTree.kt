@@ -27,7 +27,7 @@ private fun toTree(chain: List<Parser<*, *>>): Pair<Tree<String>, List<Parser<*,
 	if (chain.size == 1) return Tree(top.name, emptyList()) to emptyList()
 	val tail = chain.drop(1)
 	return when (top) {
-		is IsAParser -> Tree(top.name, emptyList()) to tail
+		is IsAParser, is MatchParser<*> -> Tree(top.name, emptyList()) to tail
 		is LazyParser, is MapParser<*,*,*>, is OrParser /* Or parser does one choice*/, is RenamingParser -> {
 			// one child
 			val child = toTree(tail)
