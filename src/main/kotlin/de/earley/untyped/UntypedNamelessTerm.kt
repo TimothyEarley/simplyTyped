@@ -1,6 +1,8 @@
 package de.earley.untyped
 
 import de.earley.simplyTyped.Keyword
+import de.earley.simplyTyped.TypedTerm
+import de.earley.simplyTyped.VariableName
 
 sealed class UntypedNamelessTerm {
 	data class Variable(val number: Int): UntypedNamelessTerm() {
@@ -17,6 +19,13 @@ sealed class UntypedNamelessTerm {
 	}
 	data class LetBinding(val bound: UntypedNamelessTerm, val expression: UntypedNamelessTerm) : UntypedNamelessTerm() {
 		override fun toString(): String = "let v0 = $bound in $expression"
+	}
+	//TODO still named
+	data class Record(val contents: Map<VariableName, UntypedNamelessTerm>) : UntypedNamelessTerm() {
+		override fun toString(): String = "{${contents.entries.joinToString { (k,v) -> "$k = $v" }}}"
+	}
+	data class RecordProjection(val  record: UntypedNamelessTerm, val project: VariableName): UntypedNamelessTerm() {
+		override fun toString(): String = "${record}.$project"
 	}
 }
 

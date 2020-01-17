@@ -30,10 +30,12 @@ private fun examples() {
 
 fun main() {
 	val src = """
-		let addTwo = (λn:Nat. succ (succ n)) in
-		let subTwo = (λn:Nat. pred (pred n)) in
-		let result = (addTwo (subTwo 0)) in
-		iszero result
+		let 1 = (succ 0) in
+		let 2 = (succ 1) in
+		let 3 = (succ 2) in
+		let 4 = (succ 3) in
+		let add = (λ a:Nat . λ b:Nat . b) in
+		add 3 4
 	""".trimIndent()
 	// val src = "pred (let id = (λn:Nat.n) in succ (id (id 0)))"
 	//TODO "let one = (λx. succ 0) in iszero (one 0)" has wrong error reporting (it is missing a type)

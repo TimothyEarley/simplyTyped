@@ -4,11 +4,13 @@ import de.earley.simplyTyped.TypedTerm.*
 import de.earley.simplyTyped.types.Type
 import de.earley.untyped.eval
 
+typealias VariableName = String
+
 sealed class TypedTerm {
-	data class Variable(val name: String): TypedTerm() {
+	data class Variable(val name: VariableName): TypedTerm() {
 		override fun toString(): String = name
 	}
-	data class Abstraction(val binder: String, val argType: Type, val body: TypedTerm): TypedTerm() {
+	data class Abstraction(val binder: VariableName, val argType: Type, val body: TypedTerm): TypedTerm() {
 		override fun toString(): String = "(λ$binder : $argType . $body)"
 	}
 	data class App(val left: TypedTerm, val right: TypedTerm): TypedTerm() {
@@ -17,8 +19,14 @@ sealed class TypedTerm {
 	data class KeywordTerm(val keyword: Keyword) : TypedTerm() {
 		override fun toString(): String = keyword.toString()
 	}
-	data class LetBinding(val binder: String, val bound: TypedTerm, val expression: TypedTerm) : TypedTerm() {
+	data class LetBinding(val binder: VariableName, val bound: TypedTerm, val expression: TypedTerm) : TypedTerm() {
 		override fun toString(): String = "let $binder = $bound in $expression"
+	}
+	data class Record(val contents: Map<VariableName, TypedTerm>): TypedTerm() {
+		override fun toString(): String = "{${contents.entries.joinToString { (k, v) -> "$k = $v" }}}"
+	}
+	data class RecordProjection(val  record: TypedTerm, val project: VariableName): TypedTerm() {
+		override fun toString(): String = "${record}.$project"
 	}
 }
 
@@ -32,6 +40,8 @@ fun TypedTerm.toNameless(
 	is App -> TypedNamelessTerm.App(left.toNameless(bindings), right.toNameless(bindings))
 	is KeywordTerm -> TypedNamelessTerm.KeywordTerm(keyword)
 	is LetBinding -> TypedNamelessTerm.LetBinding(bound.toNameless(bindings), expression.toNameless(bindings.inc() + (binder to 0)))
+	is Record -> TypedNamelessTerm.Record(contents.mapValues { it.value.toNameless() })
+	is RecordProjection -> TypedNamelessTerm.RecordProjection(record.toNameless(bindings), project)
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
@@ -40,6 +50,8 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is App -> this.left.freeVariables() + this.right.freeVariables()
 	is KeywordTerm -> emptySet()
 	is LetBinding -> this.bound.freeVariables() + (this.expression.freeVariables() - Variable(this.binder))
+	is Record -> contents.flatMap { it.value.freeVariables() }.toSet()
+	is RecordProjection -> record.freeVariables()
 }
 
 // use erasure

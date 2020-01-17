@@ -19,6 +19,14 @@ sealed class TypedNamelessTerm {
 	data class LetBinding(val bound: TypedNamelessTerm, val expression: TypedNamelessTerm) : TypedNamelessTerm() {
 		override fun toString(): String = "let v0 = $bound in $expression"
 	}
+	//TODO still named
+	data class Record(val contents: Map<VariableName, TypedNamelessTerm>) : TypedNamelessTerm() {
+		override fun toString(): String = "{${contents.entries.joinToString { (k, v) -> "$k = $v" }}}"
+	}
+	data class RecordProjection(val  record: TypedNamelessTerm, val project: VariableName): TypedNamelessTerm() {
+		override fun toString(): String = "${record}.$project"
+	}
+
 }
 
 fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
@@ -27,4 +35,6 @@ fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
 	is TypedNamelessTerm.App -> UntypedNamelessTerm.App(left.toUntyped(), right.toUntyped())
 	is TypedNamelessTerm.KeywordTerm -> UntypedNamelessTerm.KeywordTerm(keyword)
 	is TypedNamelessTerm.LetBinding -> UntypedNamelessTerm.LetBinding(bound.toUntyped(), expression.toUntyped())
+	is TypedNamelessTerm.Record -> UntypedNamelessTerm.Record(contents.mapValues { it.value.toUntyped() })
+	is TypedNamelessTerm.RecordProjection -> UntypedNamelessTerm.RecordProjection(record.toUntyped(), project)
 }

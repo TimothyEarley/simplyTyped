@@ -1,9 +1,6 @@
 package de.earley.simplyTyped.types
 
-import de.earley.simplyTyped.Keyword
-import de.earley.simplyTyped.TypedNamelessTerm
-import de.earley.simplyTyped.TypedTerm
-import de.earley.simplyTyped.toNameless
+import de.earley.simplyTyped.*
 
 
 fun TypedTerm.type(): Type? = toNameless().type(emptyMap())
@@ -40,5 +37,18 @@ private fun TypedNamelessTerm.type(
 		val t1 = bound.type(typeEnvironment)
 		if (t1 != null) expression.type(typeEnvironment + t1)
 		else null
+	}
+	is TypedNamelessTerm.Record -> {
+		contents.mapValues {
+			it.value.type(typeEnvironment)
+		}
+			.takeIf { !it.containsValue(null) }
+			?.let { Type.RecordType(it as Map<VariableName, Type> /* we have check it*/) }
+
+	}
+	is TypedNamelessTerm.RecordProjection -> {
+		val recordType = record.type(typeEnvironment)
+		if (recordType == null || recordType !is Type.RecordType) null
+		else recordType.types[project]
 	}
 }

@@ -33,7 +33,7 @@ object TermGrammar {
 	}
 
 	private val atomic: P<TypedTerm> = context("atomic") {
-		ArithmeticGrammar.arithmeticExpression or variable
+		ArithmeticGrammar.arithmeticExpression or RecordGrammar.record or variable
 	}
 
 	val safeTerm = parenTerm or
@@ -41,8 +41,10 @@ object TermGrammar {
 
 	val term: P<TypedTerm> = context("term") {
 		app or
+		RecordGrammar.projection or
 		safeTerm or
 		abstraction
+
 	}
 
 }

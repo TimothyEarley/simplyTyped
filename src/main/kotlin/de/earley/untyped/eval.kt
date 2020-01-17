@@ -51,6 +51,19 @@ private fun UntypedNamelessTerm.evalStep(): UntypedNamelessTerm = when {
 		/*E-LetV*/ bound.isValue() -> expression.sub(0, bound)
 		/*E-Let*/ else -> copy(bound = bound.evalStep())
 	}
+	this is Record -> {
+		/*E-Rcd*/
+		// find first non value
+		val firstNonValue = contents.entries.find { !it.value.isValue() }
+		require(firstNonValue != null) { "Record had no values left, so should be a value itself" }
+		val newContents = contents.toMutableMap()
+		newContents[firstNonValue.key] = firstNonValue.value.evalStep()
+		copy(contents = newContents)
+	}
+	this is RecordProjection && record is Record -> when {
+		/*E-ProjRcd*/ record.isValue() -> record.contents[project] ?: error("Attempted to project unknown label $project out of record $record")
+		/*E-Proj*/ else -> copy(record = record.evalStep())
+	}
 	else -> error("No applicable rule for $this!")
 }
 
@@ -77,6 +90,8 @@ private fun UntypedNamelessTerm.isValue(): Boolean = when (this) {
 	}
 	is KeywordTerm -> keyword.isValue
 	is LetBinding -> false
+	is Record -> contents.values.all { it.isValue() }
+	is RecordProjection -> false
 }
 
 /**
@@ -88,6 +103,8 @@ private fun UntypedNamelessTerm.shift(d: Int, c: Int): UntypedNamelessTerm = whe
 	is App -> App(left.shift(d, c), right.shift(d, c))
 	is KeywordTerm -> this
 	is LetBinding -> TODO()
+	is Record -> Record(contents.mapValues { it.value.shift(d, c) })
+	is RecordProjection -> RecordProjection(record.shift(d, c), project)
 }
 
 /**
@@ -99,4 +116,6 @@ private fun UntypedNamelessTerm.sub(num: Int, replacement: UntypedNamelessTerm):
 	is App -> App(left.sub(num, replacement), right.sub(num, replacement))
 	is KeywordTerm -> this
 	is LetBinding -> LetBinding(bound.sub(num, replacement), expression.sub(num + 1, replacement.shift(1, 0)))
+	is Record -> Record(contents.mapValues { it.value.sub(num, replacement) })
+	is RecordProjection -> RecordProjection(record.sub(num, replacement), project)
 }
