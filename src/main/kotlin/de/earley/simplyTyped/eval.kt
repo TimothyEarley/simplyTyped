@@ -117,7 +117,7 @@ private fun UntypedNamelessTerm.shift(d: Int, c: Int): UntypedNamelessTerm = whe
 	is Abstraction -> Abstraction(body.shift(d, c + 1))
 	is App -> App(left.shift(d, c), right.shift(d, c))
 	is KeywordTerm -> this
-	is LetBinding -> TODO()
+	is LetBinding -> LetBinding(bound.shift(d, c), expression.shift(d, c + 1))
 	is Record -> Record(contents.mapValues { it.value.shift(d, c) })
 	is RecordProjection -> RecordProjection(record.shift(d, c), project)
 	is IfThenElse -> IfThenElse(condition.shift(d, c), then.shift(d, c), `else`.shift(d, c))

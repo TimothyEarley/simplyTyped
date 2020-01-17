@@ -18,11 +18,21 @@ object TypeGrammar {
 			)
 		}
 
-	private val natType: P<Type.Base> = context("base type") {
-		isA(Identifier).string.map(Type::Base)
+	private val natType: P<Type.Nat> = context("nat type") {
+		isAMatch(Identifier, "Nat").map { Type.Nat }
 	}
 
+	private val boolType: P<Type.Bool> = context("nat type") {
+		isAMatch(Identifier, "Bool").map { Type.Bool }
+	}
+
+	private val recordType: P<Type.RecordType> = context("record type") {
+		isA(OpenBracket).void() +
+		many(isA(Identifier).string + isA(Colon).void() + type, isA(Comma)) +
+		isA(ClosedBracket).void()
+	}.map { types -> Type.RecordType(types.toMap()) }
+
 	val type: P<Type> = context("type") {
-		parenType or functionType or natType
+		parenType or functionType or natType or boolType or recordType
 	}
 }

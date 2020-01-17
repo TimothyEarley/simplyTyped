@@ -1,9 +1,11 @@
 package de.earley.simplyTyped.types
 
 import de.earley.simplyTyped.terms.*
+import de.earley.simplyTyped.types.Type.*
+import de.earley.simplyTyped.types.TypingResult.*
 
 
-fun TypedTerm.type(): Type? = toNameless().type(emptyMap())
+fun TypedTerm.type(): TypingResult<Type> = toNameless(emptyMap()).type(emptyMap())
 
 private typealias TypeEnvironment = Map<Int, Type>
 private fun TypeEnvironment.inc(): TypeEnvironment = this.mapKeys { (k, _) -> k + 1 }
@@ -11,61 +13,73 @@ private operator fun TypeEnvironment.plus(type: Type): TypeEnvironment = this.in
 
 private fun TypedNamelessTerm.type(
 	typeEnvironment: TypeEnvironment
-): Type? = when (this) {
-	is TypedNamelessTerm.Variable -> /*T-Var*/ typeEnvironment[this.number]
+): TypingResult<Type> = when (this) {
+	is TypedNamelessTerm.Variable -> /*T-Var*/ {
+		val type = typeEnvironment[this.number]
+		if (type == null) Error("Variable $number not found in the type env $typeEnvironment", this)
+		else Ok(type)
+	}
 	is TypedNamelessTerm.Abstraction -> /*T-Abs*/ {
-		val t2 = body.type(typeEnvironment + argType)
-		if (t2 != null)	Type.FunctionType(argType, t2)
-		else null
+		body.type(typeEnvironment + argType)
+			.map { t2 -> FunctionType(argType, t2) }
 	}
 	is TypedNamelessTerm.App -> {
 		/*T-App*/
-		val f = left.type(typeEnvironment)
-		val arg = right.type(typeEnvironment)
-		if (f is Type.FunctionType && f.from == arg) f.to else null
+		left.type(typeEnvironment).flatMap { f ->
+			right.type(typeEnvironment).flatMap { arg ->
+				if (f is FunctionType && f.from == arg) Ok(f.to) else Error("App mismatch: Function is $f, argument is $arg", this)
+			}
+		}
 	}
 	is TypedNamelessTerm.KeywordTerm -> when (this.keyword) {
-		/*T-Succ ' */ Keyword.Arithmetic.Succ -> Type.FunctionType(Nat, Nat)
-		/*T-Pred ' */ Keyword.Arithmetic.Pred -> Type.FunctionType(Nat, Nat)
-		/*T-IsZero ' */ Keyword.Arithmetic.IsZero -> Type.FunctionType(Nat, Bool)
-		/*T-Zero*/ Keyword.Arithmetic.Zero -> Nat
-		/*T-True*/ Keyword.Bools.True -> Bool
-		/*T-False*/ Keyword.Bools.False -> Bool
+		/*T-Succ ' */ Keyword.Arithmetic.Succ -> Ok(FunctionType(Nat, Nat))
+		/*T-Pred ' */ Keyword.Arithmetic.Pred -> Ok(FunctionType(Nat, Nat))
+		/*T-IsZero ' */ Keyword.Arithmetic.IsZero -> Ok(FunctionType(Nat, Bool))
+		/*T-Zero*/ Keyword.Arithmetic.Zero -> Ok(Nat)
+		/*T-True*/ Keyword.Bools.True -> Ok(Bool)
+		/*T-False*/ Keyword.Bools.False -> Ok(Bool)
 	}
 	is TypedNamelessTerm.LetBinding -> {
 		/*T-Let*/
-		val t1 = bound.type(typeEnvironment)
-		if (t1 != null) expression.type(typeEnvironment + t1)
-		else null
+		bound.type(typeEnvironment)
+			.flatMap { t1 ->
+				expression.type(typeEnvironment + t1)
+			}
 	}
 	is TypedNamelessTerm.Record -> {
-		contents.mapValues {
-			it.value.type(typeEnvironment)
+			contents.mapValues { it.value.type(typeEnvironment) }
+				.sequence()
+				.map { types ->
+					RecordType(types)
+				}
 		}
-			.takeIf { !it.containsValue(null) }
-			?.let { Type.RecordType(it as Map<VariableName, Type> /* we have check it*/) }
-
-	}
 	is TypedNamelessTerm.RecordProjection -> {
-		val recordType = record.type(typeEnvironment)
-		if (recordType == null || recordType !is Type.RecordType) null
-		else recordType.types[project]
+		record.type(typeEnvironment)
+			.flatMap { recordType ->
+				if (recordType !is RecordType) Error("projection on a non record type", this)
+				else if (! recordType.types.containsKey(project)) Error("projection label not in record", this)
+				else Ok(recordType.types.getValue(project))
+			}
+
 	}
 	is TypedNamelessTerm.IfThenElse -> {
 		/*T-If*/
-		condition.type(typeEnvironment)?.takeIf { conditionType ->
-			conditionType == Bool
-		}?.let {
-			then.type(typeEnvironment)?.let { thenType ->
-				`else`.type(typeEnvironment)?.takeIf { elseType ->
-					thenType == elseType
+		condition.type(typeEnvironment).flatMap { conditionType ->
+			if (conditionType != Bool) Error("condition is not a boolean but a $conditionType", this)
+			else then.type(typeEnvironment).flatMap { thenType ->
+				`else`.type(typeEnvironment).flatMap { elseType ->
+					if (thenType == elseType) Ok(thenType)
+					else Error("then and else differ: $thenType != $elseType", this)
 				}
 			}
 		}
 	}
 	is TypedNamelessTerm.Fix -> {
-		val funcType = func.type(typeEnvironment)
-		if (funcType != null && funcType is Type.FunctionType && funcType.from == funcType.to) funcType.from
-		else null
+		func.type(typeEnvironment)
+			.flatMap { funcType ->
+				if (funcType is FunctionType && funcType.from == funcType.to) Ok(funcType.from)
+				else Error("Fix cannot be applied to $funcType", this)
+			}
+
 	}
 }

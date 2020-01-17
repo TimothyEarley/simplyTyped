@@ -13,7 +13,7 @@ object RecordGrammar {
 	}
 
 	val projection: P<TypedTerm.RecordProjection> = context("projection") {
-		TermGrammar.safeTerm + isA(Dot).void() + isA(Identifier).string
+		TermGrammar.term + isA(Dot).void() + isA(Identifier).string
 	}.map(TypedTerm::RecordProjection)
 
 

@@ -45,10 +45,10 @@ fun fix(x: VariableName, type: Type, expression: TypedTerm): TypedTerm =
 typealias Bindings = Map<String, Int>
 fun Bindings.inc(): Bindings = this.mapValues { (_, v) -> v + 1 }
 fun TypedTerm.toNameless(
-	bindings: Bindings = emptyMap()
+	bindings: Bindings
 ): TypedNamelessTerm = when (this) {
 	is Variable -> TypedNamelessTerm.Variable(
-		bindings[name] ?: error("free variable")
+		bindings[name] ?: error("free variable $name in $this with bindings: $bindings")
 	)
 	is Abstraction -> TypedNamelessTerm.Abstraction(
 		this.argType,
@@ -65,7 +65,7 @@ fun TypedTerm.toNameless(
 			bindings
 		), expression.toNameless(bindings.inc() + (binder to 0))
 	)
-	is Record -> TypedNamelessTerm.Record(contents.mapValues { it.value.toNameless() })
+	is Record -> TypedNamelessTerm.Record(contents.mapValues { it.value.toNameless(bindings) })
 	is RecordProjection -> TypedNamelessTerm.RecordProjection(
 		record.toNameless(bindings),
 		project
@@ -91,4 +91,4 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 }
 
 // use erasure
-fun TypedTerm.eval() = toNameless().toUntyped().eval()
+fun TypedTerm.eval() = toNameless(emptyMap()).toUntyped().eval()
