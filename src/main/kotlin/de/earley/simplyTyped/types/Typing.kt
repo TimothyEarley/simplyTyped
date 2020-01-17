@@ -1,6 +1,6 @@
 package de.earley.simplyTyped.types
 
-import de.earley.simplyTyped.*
+import de.earley.simplyTyped.terms.*
 
 
 fun TypedTerm.type(): Type? = toNameless().type(emptyMap())

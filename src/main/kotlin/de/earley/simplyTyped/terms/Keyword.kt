@@ -1,4 +1,4 @@
-package de.earley.simplyTyped
+package de.earley.simplyTyped.terms
 
 //TODO enum?
 sealed class Keyword(val name: String, val isValue: kotlin.Boolean) {

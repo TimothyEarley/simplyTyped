@@ -1,6 +1,6 @@
 package de.earley.simplyTyped.types
 
-import de.earley.simplyTyped.VariableName
+import de.earley.simplyTyped.terms.VariableName
 
 sealed class Type {
 	data class FunctionType(val from: Type, val to: Type): Type() {

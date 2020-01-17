@@ -1,8 +1,9 @@
-package de.earley.untyped
+package de.earley.simplyTyped
 
-import de.earley.simplyTyped.Keyword
-import de.earley.simplyTyped.Keyword.*
-import de.earley.untyped.UntypedNamelessTerm.*
+import de.earley.simplyTyped.terms.Keyword
+import de.earley.simplyTyped.terms.Keyword.*
+import de.earley.simplyTyped.terms.UntypedNamelessTerm
+import de.earley.simplyTyped.terms.UntypedNamelessTerm.*
 import kotlin.contracts.contract
 
 fun UntypedNamelessTerm.eval(): UntypedNamelessTerm {

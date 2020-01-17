@@ -4,8 +4,8 @@ import de.earley.parser.*
 import de.earley.simplyTyped.parser.SimplyTypedGrammar
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
+import de.earley.simplyTyped.terms.*
 import de.earley.simplyTyped.types.type
-import de.earley.untyped.eval
 
 fun parse(src: String, debug: Boolean = false): ParserResult<SimplyTypedLambdaToken, TypedTerm> {
 	val tokens = lex("($src)", values(), EOF)

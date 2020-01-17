@@ -1,8 +1,8 @@
-package de.earley.simplyTyped
+package de.earley.simplyTyped.terms
 
-import de.earley.simplyTyped.TypedTerm.*
+import de.earley.simplyTyped.eval
+import de.earley.simplyTyped.terms.TypedTerm.*
 import de.earley.simplyTyped.types.Type
-import de.earley.untyped.eval
 
 typealias VariableName = String
 
@@ -35,13 +35,29 @@ fun Bindings.inc(): Bindings = this.mapValues { (_, v) -> v + 1 }
 fun TypedTerm.toNameless(
 	bindings: Bindings = emptyMap()
 ): TypedNamelessTerm = when (this) {
-	is Variable -> TypedNamelessTerm.Variable(bindings[name] ?: error("free variable"))
-	is Abstraction -> TypedNamelessTerm.Abstraction(this.argType, body.toNameless(bindings.inc() + (binder to 0)))
-	is App -> TypedNamelessTerm.App(left.toNameless(bindings), right.toNameless(bindings))
+	is Variable -> TypedNamelessTerm.Variable(
+		bindings[name] ?: error("free variable")
+	)
+	is Abstraction -> TypedNamelessTerm.Abstraction(
+		this.argType,
+		body.toNameless(bindings.inc() + (binder to 0))
+	)
+	is App -> TypedNamelessTerm.App(
+		left.toNameless(
+			bindings
+		), right.toNameless(bindings)
+	)
 	is KeywordTerm -> TypedNamelessTerm.KeywordTerm(keyword)
-	is LetBinding -> TypedNamelessTerm.LetBinding(bound.toNameless(bindings), expression.toNameless(bindings.inc() + (binder to 0)))
+	is LetBinding -> TypedNamelessTerm.LetBinding(
+		bound.toNameless(
+			bindings
+		), expression.toNameless(bindings.inc() + (binder to 0))
+	)
 	is Record -> TypedNamelessTerm.Record(contents.mapValues { it.value.toNameless() })
-	is RecordProjection -> TypedNamelessTerm.RecordProjection(record.toNameless(bindings), project)
+	is RecordProjection -> TypedNamelessTerm.RecordProjection(
+		record.toNameless(bindings),
+		project
+	)
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {

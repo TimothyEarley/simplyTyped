@@ -1,7 +1,6 @@
-package de.earley.simplyTyped
+package de.earley.simplyTyped.terms
 
 import de.earley.simplyTyped.types.Type
-import de.earley.untyped.UntypedNamelessTerm
 
 sealed class TypedNamelessTerm {
 	data class Variable(val number: Int): TypedNamelessTerm() {
