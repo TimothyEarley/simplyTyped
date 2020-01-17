@@ -8,7 +8,18 @@ sealed class UntypedNamelessTerm {
 		override fun toString(): String = "(λ.$body)"
 	}
 	data class App(val left: UntypedNamelessTerm, val right: UntypedNamelessTerm): UntypedNamelessTerm() {
-		override fun toString(): String = "($left $right)"
+		override fun toString(): String =
+			if (left is KeywordTerm && left.keyword == Keyword.Arithmetic.Succ) {
+				var current = right
+				var sum = 1
+				while (current is App && current.left is KeywordTerm && (current.left as KeywordTerm).keyword == Keyword.Arithmetic.Succ) {
+					current = current.right
+					sum++
+				}
+				if (current is KeywordTerm && current.keyword  == Keyword.Arithmetic.Zero) "$sum"
+				else "$sum+$current"
+			}
+			else "($left $right)"
 	}
 	data class KeywordTerm(val keyword: Keyword) : UntypedNamelessTerm() {
 		override fun toString(): String = keyword.toString()
@@ -29,7 +40,9 @@ sealed class UntypedNamelessTerm {
 	data class Fix(val func: UntypedNamelessTerm): UntypedNamelessTerm() {
 		override fun toString(): String = "fix $func"
 	}
+	object Unit : UntypedNamelessTerm() {
+		override fun toString(): String = "unit"
+	}
 }
-
 
 //TODO add function to create a pure lambda calculus version

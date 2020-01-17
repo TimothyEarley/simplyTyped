@@ -107,6 +107,7 @@ private fun UntypedNamelessTerm.isValue(): Boolean = when (this) {
 	is RecordProjection -> false
 	is IfThenElse -> false
 	is Fix -> false
+	is UntypedNamelessTerm.Unit -> true
 }
 
 /**
@@ -122,6 +123,7 @@ private fun UntypedNamelessTerm.shift(d: Int, c: Int): UntypedNamelessTerm = whe
 	is RecordProjection -> RecordProjection(record.shift(d, c), project)
 	is IfThenElse -> IfThenElse(condition.shift(d, c), then.shift(d, c), `else`.shift(d, c))
 	is Fix -> Fix(func.shift(d, c))
+	is UntypedNamelessTerm.Unit -> UntypedNamelessTerm.Unit
 }
 
 /**
@@ -137,4 +139,5 @@ private fun UntypedNamelessTerm.sub(num: Int, replacement: UntypedNamelessTerm):
 	is RecordProjection -> RecordProjection(record.sub(num, replacement), project)
 	is IfThenElse -> IfThenElse(condition.sub(num, replacement), then.sub(num, replacement), `else`.sub(num, replacement))
 	is Fix -> Fix(func.sub(num, replacement))
+	is UntypedNamelessTerm.Unit -> UntypedNamelessTerm.Unit
 }

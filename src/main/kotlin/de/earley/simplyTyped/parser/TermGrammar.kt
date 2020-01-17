@@ -32,19 +32,19 @@ object TermGrammar {
 		isA(OpenParen).void() + term + isA(ClosedParen).void()
 	}
 
-	private val atomic: P<TypedTerm> = context("atomic") {
-		ArithmeticGrammar.arithmeticExpression or RecordGrammar.record or variable
-	}
-
-	val safeTerm = parenTerm or
-			LetBindingGrammar.binding or atomic
+	/**
+	 * A safe term has a well defined end and pattern
+	 */
+	val safeTerm =
+		parenTerm or LetBindingGrammar.binding or RecordGrammar.record or context("atomic") {
+			UnitParser.unit or ArithmeticGrammar.arithmeticExpression or variable
+		}
 
 	val term: P<TypedTerm> = context("term") {
 		app or
 		RecordGrammar.projection or
 		safeTerm or
 		abstraction
-
 	}
 
 }

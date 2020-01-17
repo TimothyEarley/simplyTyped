@@ -14,6 +14,7 @@ enum class SimplyTypedLambdaToken(r: String): TokenType {
 	LetRec("letrec"),
 	Let("let"),
 	In("in"),
+	Unit("unit"),
 	// other tokens
 	Dot("\\."),
 	OpenParen("\\("),
@@ -24,6 +25,7 @@ enum class SimplyTypedLambdaToken(r: String): TokenType {
 	Colon(":"),
 	Arrow("->"),
 	Equals("="),
+	Number("\\d+"),
 	Identifier("\\w+"),
 	WS("\\s"),
 	EOF("\\z"); //TODO better EOF handling

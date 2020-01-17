@@ -1,13 +1,12 @@
 package de.earley.simplyTyped.parser
 
-import de.earley.parser.Tree
 import de.earley.parser.combinators.*
 import de.earley.parser.context
 import de.earley.simplyTyped.terms.Keyword
 import de.earley.simplyTyped.terms.Keyword.*
 import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
-import de.earley.simplyTyped.terms.UntypedNamelessTerm
+import de.earley.simplyTyped.terms.numberTerm
 
 private fun keyword(type: Keyword): P<TypedTerm.KeywordTerm> = context(type.name) {
 	isAMatch(Identifier, type.name).map { TypedTerm.KeywordTerm(type) }
@@ -35,6 +34,10 @@ object ArithmeticGrammar {
 		isA(True).map { Bools.True } or isA(False).map { Bools.False }
 	}.map(TypedTerm::KeywordTerm)
 
-	val arithmeticExpression: P<TypedTerm> = keyword(Arithmetic.Zero) or boolean or functions or ifThenElse
+	private val number = context("number") {
+		isA(Number).map { n -> numberTerm(n.value.toInt()) }
+	}
+
+	val arithmeticExpression: P<TypedTerm> = number or boolean or functions or ifThenElse
 
 }

@@ -31,6 +31,9 @@ sealed class TypedNamelessTerm {
 	data class Fix(val func: TypedNamelessTerm): TypedNamelessTerm() {
 		override fun toString(): String = "fix $func"
 	}
+	object Unit : TypedNamelessTerm() {
+		override fun toString(): String = "unit"
+	}
 }
 
 fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
@@ -43,4 +46,5 @@ fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
 	is TypedNamelessTerm.RecordProjection -> UntypedNamelessTerm.RecordProjection(record.toUntyped(), project)
 	is TypedNamelessTerm.IfThenElse -> UntypedNamelessTerm.IfThenElse(condition.toUntyped(), then.toUntyped(), `else`.toUntyped())
 	is TypedNamelessTerm.Fix -> UntypedNamelessTerm.Fix(func.toUntyped())
+	is TypedNamelessTerm.Unit -> UntypedNamelessTerm.Unit
 }

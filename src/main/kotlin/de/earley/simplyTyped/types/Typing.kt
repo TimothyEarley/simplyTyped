@@ -82,4 +82,5 @@ private fun TypedNamelessTerm.type(
 			}
 
 	}
+	is TypedNamelessTerm.Unit -> Ok(Type.Unit)
 }

@@ -18,4 +18,7 @@ sealed class Type {
 	object Bool : Type() {
 		override fun toString(): String = "Bool"
 	}
+	object Unit : Type() {
+		override fun toString(): String = "Unit"
+	}
 }

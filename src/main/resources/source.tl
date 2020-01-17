@@ -1,9 +1,3 @@
-let 1 = succ 0 in
-let 2 = succ 1 in
-let 3 = succ 2 in
-let 4 = succ 3 in
-let 5 = succ 4 in
-
 let and = λ a:Bool . λ b:Bool . if a
 	then b
 	else false
@@ -42,6 +36,7 @@ letrec factorialAndSum : Nat -> {factorial : Nat, sum: Nat} = λ n:Nat .
 in
 
 {
-	3times4is4times3 = ((equal ((times 3) 4)) ((times 4) 3)),
-	facsum = (factorialAndSum 5)
+	timesWorks = ((equal ((times 3) 4)) ((times 4) 3)),
+	facsum = (factorialAndSum 5),
+	u = unit
 }

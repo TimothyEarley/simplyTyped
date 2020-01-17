@@ -1,6 +1,10 @@
 package de.earley.simplyTyped.terms
 
+import de.earley.parser.combinators.isAMatch
+import de.earley.parser.combinators.map
+import de.earley.parser.context
 import de.earley.simplyTyped.eval
+import de.earley.simplyTyped.parser.SimplyTypedLambdaToken
 import de.earley.simplyTyped.terms.TypedTerm.*
 import de.earley.simplyTyped.types.Type
 import java.util.concurrent.locks.Condition
@@ -36,11 +40,18 @@ sealed class TypedTerm {
 	data class Fix(val func: TypedTerm): TypedTerm() {
 		override fun toString(): String = "fix $func"
 	}
+	object Unit : TypedTerm() {
+		override fun toString(): String = "unit"
+	}
 }
 
 //fix (λx : T.t1)
 fun fix(x: VariableName, type: Type, expression: TypedTerm): TypedTerm =
 	Fix(Abstraction(x, type, expression))
+
+fun numberTerm(n: Int): TypedTerm =
+	if (n == 0) KeywordTerm(Keyword.Arithmetic.Zero)
+	else App(KeywordTerm(Keyword.Arithmetic.Succ), numberTerm(n - 1))
 
 typealias Bindings = Map<String, Int>
 fun Bindings.inc(): Bindings = this.mapValues { (_, v) -> v + 1 }
@@ -76,6 +87,7 @@ fun TypedTerm.toNameless(
 		`else`.toNameless(bindings)
 	)
 	is Fix -> TypedNamelessTerm.Fix(func.toNameless(bindings))
+	is TypedTerm.Unit -> TypedNamelessTerm.Unit
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
@@ -88,6 +100,7 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is RecordProjection -> record.freeVariables()
 	is IfThenElse -> condition.freeVariables() + then.freeVariables() + `else`.freeVariables()
 	is Fix -> func.freeVariables()
+	is TypedTerm.Unit -> emptySet()
 }
 
 // use erasure
