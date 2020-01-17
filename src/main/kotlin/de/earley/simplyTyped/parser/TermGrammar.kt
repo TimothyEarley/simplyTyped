@@ -37,7 +37,7 @@ object TermGrammar {
 	}
 
 	val safeTerm = parenTerm or
-			LetBindingGrammar.letBinding or atomic
+			LetBindingGrammar.binding or atomic
 
 	val term: P<TypedTerm> = context("term") {
 		app or

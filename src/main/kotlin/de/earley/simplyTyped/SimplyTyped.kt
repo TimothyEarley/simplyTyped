@@ -35,11 +35,19 @@ fun main() {
 		let 2 = succ 1 in
 		let 3 = succ 2 in
 		let 4 = succ 3 in
-		let add =
+		let and = λ a:Bool . λ a:Bool . if a
+			then b
+			else false
+		in
+		letrec add : Nat -> (Nat -> Nat) =
 			λ a:Nat . λ b:Nat . if (iszero a)
 				then b
 				else succ ((add (pred a)) b)
 		in
+		letrec times : Nat -> Nat -> Nat =
+			λ a:Nat . λ b:Nat . if (iszero a)
+				then 0
+				else if ()
 		add 3 4
 	""".trimIndent()
 	// val src = "pred (let id = (λn:Nat.n) in succ (id (id 0)))"

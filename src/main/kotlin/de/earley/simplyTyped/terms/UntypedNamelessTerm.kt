@@ -26,6 +26,9 @@ sealed class UntypedNamelessTerm {
 	data class IfThenElse(val condition: UntypedNamelessTerm, val then: UntypedNamelessTerm, val `else`: UntypedNamelessTerm): UntypedNamelessTerm() {
 		override fun toString(): String = "if $condition then $then else $`else`"
 	}
+	data class Fix(val func: UntypedNamelessTerm): UntypedNamelessTerm() {
+		override fun toString(): String = "fix $func"
+	}
 }
 
 

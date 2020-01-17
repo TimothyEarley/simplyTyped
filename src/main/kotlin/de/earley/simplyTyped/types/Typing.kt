@@ -62,6 +62,10 @@ private fun TypedNamelessTerm.type(
 				}
 			}
 		}
-
+	}
+	is TypedNamelessTerm.Fix -> {
+		val funcType = func.type(typeEnvironment)
+		if (funcType != null && funcType is Type.FunctionType && funcType.from == funcType.to) funcType.from
+		else null
 	}
 }

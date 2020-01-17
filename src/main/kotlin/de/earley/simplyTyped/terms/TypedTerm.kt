@@ -4,6 +4,7 @@ import de.earley.simplyTyped.eval
 import de.earley.simplyTyped.terms.TypedTerm.*
 import de.earley.simplyTyped.types.Type
 import java.util.concurrent.locks.Condition
+import kotlin.math.exp
 
 typealias VariableName = String
 
@@ -26,13 +27,20 @@ sealed class TypedTerm {
 	data class Record(val contents: Map<VariableName, TypedTerm>): TypedTerm() {
 		override fun toString(): String = "{${contents.entries.joinToString { (k, v) -> "$k = $v" }}}"
 	}
-	data class RecordProjection(val  record: TypedTerm, val project: VariableName): TypedTerm() {
+	data class RecordProjection(val record: TypedTerm, val project: VariableName): TypedTerm() {
 		override fun toString(): String = "${record}.$project"
 	}
 	data class IfThenElse(val condition: TypedTerm, val then: TypedTerm, val `else`: TypedTerm): TypedTerm() {
 		override fun toString(): String = "if $condition then $then else $`else`"
 	}
+	data class Fix(val func: TypedTerm): TypedTerm() {
+		override fun toString(): String = "fix $func"
+	}
 }
+
+//fix (λx : T.t1)
+fun fix(x: VariableName, type: Type, expression: TypedTerm): TypedTerm =
+	Fix(Abstraction(x, type, expression))
 
 typealias Bindings = Map<String, Int>
 fun Bindings.inc(): Bindings = this.mapValues { (_, v) -> v + 1 }
@@ -67,6 +75,7 @@ fun TypedTerm.toNameless(
 		then.toNameless(bindings),
 		`else`.toNameless(bindings)
 	)
+	is Fix -> TypedNamelessTerm.Fix(func.toNameless(bindings))
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
@@ -78,6 +87,7 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is Record -> contents.flatMap { it.value.freeVariables() }.toSet()
 	is RecordProjection -> record.freeVariables()
 	is IfThenElse -> condition.freeVariables() + then.freeVariables() + `else`.freeVariables()
+	is Fix -> func.freeVariables()
 }
 
 // use erasure

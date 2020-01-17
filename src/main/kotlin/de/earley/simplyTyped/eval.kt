@@ -4,6 +4,7 @@ import de.earley.simplyTyped.terms.Keyword
 import de.earley.simplyTyped.terms.Keyword.*
 import de.earley.simplyTyped.terms.UntypedNamelessTerm
 import de.earley.simplyTyped.terms.UntypedNamelessTerm.*
+import de.earley.simplyTyped.terms.fix
 import kotlin.contracts.contract
 
 fun UntypedNamelessTerm.eval(): UntypedNamelessTerm {
@@ -71,6 +72,11 @@ private fun UntypedNamelessTerm.evalStep(): UntypedNamelessTerm = when {
 		/*E-IfFalse*/ condition.isKeyword(Bools.False) -> `else`
 		else -> error("If with invalid condition: $condition")
 	}
+	this is Fix -> when {
+		/*E-FixBeta*/ func is Abstraction -> func.body.sub(0, Fix(func))
+		/*E-Fix*/ !func.isValue() -> copy(func.evalStep())
+		else -> error("cannot apply fix to $func")
+	}
 	else -> error("No applicable rule for $this!")
 }
 
@@ -93,13 +99,14 @@ private fun Keyword.asTerm() = KeywordTerm(this)
 private fun UntypedNamelessTerm.isValue(): Boolean = when (this) {
 	is Variable, is Abstraction -> true
 	is App -> {
-		left.isKeyword(Arithmetic.Succ) //TODO improve this
+		left.isKeyword(Arithmetic.Succ) && right.isValue()
 	}
 	is KeywordTerm -> keyword.isValue
 	is LetBinding -> false
 	is Record -> contents.values.all { it.isValue() }
 	is RecordProjection -> false
 	is IfThenElse -> false
+	is Fix -> false
 }
 
 /**
@@ -114,6 +121,7 @@ private fun UntypedNamelessTerm.shift(d: Int, c: Int): UntypedNamelessTerm = whe
 	is Record -> Record(contents.mapValues { it.value.shift(d, c) })
 	is RecordProjection -> RecordProjection(record.shift(d, c), project)
 	is IfThenElse -> IfThenElse(condition.shift(d, c), then.shift(d, c), `else`.shift(d, c))
+	is Fix -> Fix(func.shift(d, c))
 }
 
 /**
@@ -128,4 +136,5 @@ private fun UntypedNamelessTerm.sub(num: Int, replacement: UntypedNamelessTerm):
 	is Record -> Record(contents.mapValues { it.value.sub(num, replacement) })
 	is RecordProjection -> RecordProjection(record.sub(num, replacement), project)
 	is IfThenElse -> IfThenElse(condition.sub(num, replacement), then.sub(num, replacement), `else`.sub(num, replacement))
+	is Fix -> Fix(func.sub(num, replacement))
 }

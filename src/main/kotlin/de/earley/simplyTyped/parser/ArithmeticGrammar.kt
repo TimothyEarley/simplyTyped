@@ -29,14 +29,11 @@ object ArithmeticGrammar {
 		TermGrammar.term +
 		isA(Else).void() +
 		TermGrammar.term
-	}.map { condition, then, `else` ->
-		TypedTerm.IfThenElse(condition, then, `else`)
-
-	}
+	}.map(TypedTerm::IfThenElse)
 
 	private val boolean: P<TypedTerm> = context("boolean") {
 		isA(True).map { Bools.True } or isA(False).map { Bools.False }
-	}.map { TypedTerm.KeywordTerm(it) }
+	}.map(TypedTerm::KeywordTerm)
 
 	val arithmeticExpression: P<TypedTerm> = keyword(Arithmetic.Zero) or boolean or functions or ifThenElse
 

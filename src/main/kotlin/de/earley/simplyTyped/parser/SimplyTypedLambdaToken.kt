@@ -11,6 +11,7 @@ enum class SimplyTypedLambdaToken(r: String): TokenType {
 	Else("else"),
 	True("true"),
 	False("false"),
+	LetRec("letrec"),
 	Let("let"),
 	In("in"),
 	// other tokens

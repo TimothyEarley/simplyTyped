@@ -14,7 +14,7 @@ object RecordGrammar {
 
 	val projection: P<TypedTerm.RecordProjection> = context("projection") {
 		TermGrammar.safeTerm + isA(Dot).void() + isA(Identifier).string
-	}.map { record, project -> TypedTerm.RecordProjection(record, project) }
+	}.map(TypedTerm::RecordProjection)
 
 
 	val record: P<TypedTerm.Record> = context("record") {
