@@ -51,4 +51,17 @@ private fun TypedNamelessTerm.type(
 		if (recordType == null || recordType !is Type.RecordType) null
 		else recordType.types[project]
 	}
+	is TypedNamelessTerm.IfThenElse -> {
+		/*T-If*/
+		condition.type(typeEnvironment)?.takeIf { conditionType ->
+			conditionType == Bool
+		}?.let {
+			then.type(typeEnvironment)?.let { thenType ->
+				`else`.type(typeEnvironment)?.takeIf { elseType ->
+					thenType == elseType
+				}
+			}
+		}
+
+	}
 }

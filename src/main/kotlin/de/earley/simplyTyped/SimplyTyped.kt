@@ -29,12 +29,17 @@ private fun examples() {
 }
 
 fun main() {
+
 	val src = """
-		let 1 = (succ 0) in
-		let 2 = (succ 1) in
-		let 3 = (succ 2) in
-		let 4 = (succ 3) in
-		let add = (λ a:Nat . λ b:Nat . b) in
+		let 1 = succ 0 in
+		let 2 = succ 1 in
+		let 3 = succ 2 in
+		let 4 = succ 3 in
+		let add =
+			λ a:Nat . λ b:Nat . if (iszero a)
+				then b
+				else succ ((add (pred a)) b)
+		in
 		add 3 4
 	""".trimIndent()
 	// val src = "pred (let id = (λn:Nat.n) in succ (id (id 0)))"

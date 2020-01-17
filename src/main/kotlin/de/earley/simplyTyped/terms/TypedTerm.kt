@@ -3,6 +3,7 @@ package de.earley.simplyTyped.terms
 import de.earley.simplyTyped.eval
 import de.earley.simplyTyped.terms.TypedTerm.*
 import de.earley.simplyTyped.types.Type
+import java.util.concurrent.locks.Condition
 
 typealias VariableName = String
 
@@ -27,6 +28,9 @@ sealed class TypedTerm {
 	}
 	data class RecordProjection(val  record: TypedTerm, val project: VariableName): TypedTerm() {
 		override fun toString(): String = "${record}.$project"
+	}
+	data class IfThenElse(val condition: TypedTerm, val then: TypedTerm, val `else`: TypedTerm): TypedTerm() {
+		override fun toString(): String = "if $condition then $then else $`else`"
 	}
 }
 
@@ -58,6 +62,11 @@ fun TypedTerm.toNameless(
 		record.toNameless(bindings),
 		project
 	)
+	is IfThenElse -> TypedNamelessTerm.IfThenElse(
+		condition.toNameless(bindings),
+		then.toNameless(bindings),
+		`else`.toNameless(bindings)
+	)
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
@@ -68,6 +77,7 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is LetBinding -> this.bound.freeVariables() + (this.expression.freeVariables() - Variable(this.binder))
 	is Record -> contents.flatMap { it.value.freeVariables() }.toSet()
 	is RecordProjection -> record.freeVariables()
+	is IfThenElse -> condition.freeVariables() + then.freeVariables() + `else`.freeVariables()
 }
 
 // use erasure

@@ -7,11 +7,12 @@ import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 
 object LetBindingGrammar {
 	val letBinding: P<TypedTerm.LetBinding> = context("let binding") {
-		(isAMatch(Identifier, "let").void() +
+		(
+				isA(Let).void() +
 				isA(Identifier).string +
 				isA(Equals).void() +
-				TermGrammar.safeTerm +
-				isAMatch(Identifier, "in").void() +
+				TermGrammar.term +
+				isA(In).void() +
 				TermGrammar.term
 		).map(TypedTerm::LetBinding)
 	}

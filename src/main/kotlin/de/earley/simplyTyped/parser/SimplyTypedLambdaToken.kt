@@ -5,6 +5,15 @@ import de.earley.parser.TokenType
 //TODO keywords need their own token, not just identifier
 enum class SimplyTypedLambdaToken(r: String): TokenType {
 	Lambda("λ"),
+	// keywords (all hard at the moment, maybe some can be soft later)
+	If("if"),
+	Then("then"),
+	Else("else"),
+	True("true"),
+	False("false"),
+	Let("let"),
+	In("in"),
+	// other tokens
 	Dot("\\."),
 	OpenParen("\\("),
 	ClosedParen("\\)"),

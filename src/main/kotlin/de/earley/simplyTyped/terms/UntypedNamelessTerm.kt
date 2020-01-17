@@ -23,6 +23,9 @@ sealed class UntypedNamelessTerm {
 	data class RecordProjection(val  record: UntypedNamelessTerm, val project: VariableName): UntypedNamelessTerm() {
 		override fun toString(): String = "${record}.$project"
 	}
+	data class IfThenElse(val condition: UntypedNamelessTerm, val then: UntypedNamelessTerm, val `else`: UntypedNamelessTerm): UntypedNamelessTerm() {
+		override fun toString(): String = "if $condition then $then else $`else`"
+	}
 }
 
 

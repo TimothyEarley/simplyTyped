@@ -65,6 +65,12 @@ private fun UntypedNamelessTerm.evalStep(): UntypedNamelessTerm = when {
 		/*E-ProjRcd*/ record.isValue() -> record.contents[project] ?: error("Attempted to project unknown label $project out of record $record")
 		/*E-Proj*/ else -> copy(record = record.evalStep())
 	}
+	this is IfThenElse -> when {
+		/*E-If*/ !condition.isValue() -> copy(condition = condition.evalStep())
+		/*E-IfTrue*/ condition.isKeyword(Bools.True) -> then
+		/*E-IfFalse*/ condition.isKeyword(Bools.False) -> `else`
+		else -> error("If with invalid condition: $condition")
+	}
 	else -> error("No applicable rule for $this!")
 }
 
@@ -93,6 +99,7 @@ private fun UntypedNamelessTerm.isValue(): Boolean = when (this) {
 	is LetBinding -> false
 	is Record -> contents.values.all { it.isValue() }
 	is RecordProjection -> false
+	is IfThenElse -> false
 }
 
 /**
@@ -106,6 +113,7 @@ private fun UntypedNamelessTerm.shift(d: Int, c: Int): UntypedNamelessTerm = whe
 	is LetBinding -> TODO()
 	is Record -> Record(contents.mapValues { it.value.shift(d, c) })
 	is RecordProjection -> RecordProjection(record.shift(d, c), project)
+	is IfThenElse -> IfThenElse(condition.shift(d, c), then.shift(d, c), `else`.shift(d, c))
 }
 
 /**
@@ -119,4 +127,5 @@ private fun UntypedNamelessTerm.sub(num: Int, replacement: UntypedNamelessTerm):
 	is LetBinding -> LetBinding(bound.sub(num, replacement), expression.sub(num + 1, replacement.shift(1, 0)))
 	is Record -> Record(contents.mapValues { it.value.sub(num, replacement) })
 	is RecordProjection -> RecordProjection(record.sub(num, replacement), project)
+	is IfThenElse -> IfThenElse(condition.sub(num, replacement), then.sub(num, replacement), `else`.sub(num, replacement))
 }
