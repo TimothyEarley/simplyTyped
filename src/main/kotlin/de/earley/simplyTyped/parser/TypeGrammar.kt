@@ -30,6 +30,10 @@ object TypeGrammar {
 		isAMatch(Identifier, "Unit").map { Type.Unit }
 	}
 
+	private val topType: P<Type.Top> = context("top type") {
+		isAMatch(Identifier, "Top").map { Type.Top }
+	}
+
 	private val recordType: P<Type.RecordType> = context("record type") {
 		isA(OpenBracket).void() +
 		many(isA(Identifier).string + isA(Colon).void() + type, isA(Comma)) +
@@ -54,6 +58,7 @@ object TypeGrammar {
 		natType or
 		boolType or
 		unitType or
+		topType or
 		recordType or
 		variantType or
 		userType

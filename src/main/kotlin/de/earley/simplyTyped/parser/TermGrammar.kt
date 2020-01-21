@@ -49,6 +49,7 @@ object TermGrammar {
 
 	val term: P<TypedTerm> = context("term") {
 		app or
+		SequenceGrammar.sequence or
 		RecordGrammar.projection or
 		safeTerm or
 		abstraction

@@ -42,7 +42,7 @@ sealed class ParserResult<Type:TokenType, out R> {
 	}
 }
 
-fun <Type:TokenType, T:Token<Type>, A, B> ParserResult<Type, A>.map(f: (A) -> B): ParserResult<Type, B> = when (this) {
+fun <Type:TokenType, A, B> ParserResult<Type, A>.map(f: (A) -> B): ParserResult<Type, B> = when (this) {
 	is ParserResult.Ok -> ParserResult.Ok(next, f(result))
 	is ParserResult.Error -> this
 }
@@ -52,7 +52,7 @@ fun <Type:TokenType, A, B> ParserResult<Type, A>.flatMap(f: (ParserResult.Ok<Typ
 	is ParserResult.Error -> this
 }
 
-fun <Type:TokenType, T:Token<Type>, A> ParserResult<Type, A>.flatMapLeft(f: (ParserResult.Error<Type>) -> ParserResult<Type, A>): ParserResult<Type, A> = when (this) {
+fun <Type:TokenType, A> ParserResult<Type, A>.flatMapLeft(f: (ParserResult.Error<Type>) -> ParserResult<Type, A>): ParserResult<Type, A> = when (this) {
 	is ParserResult.Ok -> this
 	is ParserResult.Error -> f(this)
 }
@@ -99,7 +99,7 @@ fun <Type:TokenType, R, A> ParserResult<Type, R>.fold(
 	is ParserResult.Error -> left(this)
 }
 
-fun <Type:TokenType, T:Token<Type>, R> ParserResult<Type, R>.orThrow() = fold(
+fun <Type:TokenType, R> ParserResult<Type, R>.orThrow() = fold(
 	{
 		error(this)
 	},

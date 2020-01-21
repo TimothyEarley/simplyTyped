@@ -31,6 +31,7 @@ enum class SimplyTypedLambdaToken(r: String): TokenType {
 	Pipe("\\|"),
 	Comma(","),
 	Colon(":"),
+	SemiColon(";"),
 	Arrow("->"),
 	Equals("="),
 	Number("\\d+"),
