@@ -27,10 +27,10 @@ private fun TypedNamelessTerm.type(
 		}
 	}
 	is TypedNamelessTerm.App -> {
-		/*T-App*/
+		/*AT-App*/
 		left.type(variableTypes, userTypes).flatMap { f ->
 			right.type(variableTypes, userTypes).flatMap { arg ->
-				if (f is FunctionType && f.from == arg) Ok(f.to) else Error("App mismatch: Function is $f, argument is $arg", this)
+				if (f is FunctionType && arg.isSubtype(f.from)) Ok(f.to) else Error("App mismatch: Function is $f, argument is $arg", this)
 			}
 		}
 	}

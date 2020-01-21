@@ -23,6 +23,9 @@ sealed class Type {
 	object Unit : Type() {
 		override fun toString(): String = "Unit"
 	}
+	object Top : Type() {
+		override fun toString(): String = "Top"
+	}
 
 	data class Variant(val variants: Map<TypeName, Type>): Type() {
 		override fun toString(): String = "<${variants.entries.joinToString { (k, v) -> "$k = $v" }}>"
