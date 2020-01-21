@@ -3,6 +3,7 @@ package de.earley.simplyTyped.types
 import de.earley.simplyTyped.terms.*
 import de.earley.simplyTyped.types.Type.*
 import de.earley.simplyTyped.types.TypingResult.*
+import kotlin.Error
 
 
 fun TypedTerm.type(): TypingResult<Type> = toNameless(emptyMap()).type(emptyMap(), emptyMap())
@@ -29,8 +30,14 @@ private fun TypedNamelessTerm.type(
 	is TypedNamelessTerm.App -> {
 		/*AT-App*/
 		left.type(variableTypes, userTypes).flatMap { f ->
-			right.type(variableTypes, userTypes).flatMap { arg ->
-				if (f is FunctionType && arg.isSubtype(f.from)) Ok(f.to) else Error("App mismatch: Function is $f, argument is $arg", this)
+			if (f !is FunctionType) Error("Trying to call non-function $f", this)
+			else f.from.resolveUserType(userTypes, this).flatMap { fromType ->
+				right.type(variableTypes, userTypes).flatMap { arg ->
+					if (arg.isSubtype(fromType)) Ok(f.to) else Error(
+						"App mismatch: Function is $f, argument is $arg",
+						this
+					)
+				}
 			}
 		}
 	}
@@ -80,8 +87,13 @@ private fun TypedNamelessTerm.type(
 	is TypedNamelessTerm.Fix -> {
 		func.type(variableTypes, userTypes)
 			.flatMap { funcType ->
-				if (funcType is FunctionType && funcType.from == funcType.to) Ok(funcType.from)
-				else Error("Fix cannot be applied to $funcType", this)
+				if (funcType !is FunctionType) Error("can only fix on functions, not on $funcType", this)
+				else funcType.from.resolveUserType(userTypes, this).flatMap {  fromType ->
+					funcType.to.resolveUserType(userTypes, this).flatMap { toType ->
+						if (fromType == toType) Ok(funcType.from)
+						else Error("Fix cannot be applied to $fromType -> $toType", this)
+					}
+				}
 			}
 
 	}
@@ -119,6 +131,20 @@ private fun TypedNamelessTerm.type(
 			}
 		}
 	}
+	is TypedNamelessTerm.Assign -> /*T-Assign*/variable.type(variableTypes, userTypes).flatMap {  varType ->
+		if (varType !is Ref) Error("Cannot assign to non ref type $varType", this)
+		else term.type(variableTypes, userTypes).flatMap {  termType ->
+			if (termType != varType.of) Error("Incompatible types in assign: ${varType.of} := $termType", this)
+			else Ok(Type.Unit)
+		}
+	}
+	is TypedNamelessTerm.Read -> variable.type(variableTypes, userTypes).flatMap {
+		if (it is Ref) Ok(it.of)
+		else Error("Cannot dereference a non Ref type: $it", this)
+	}
+	is TypedNamelessTerm.Ref -> term.type(variableTypes, userTypes).map {
+		/*T-Ref*/ Type.Ref(it)
+	}
 }
 
 private fun Type.resolveUserType(userTypes: Map<TypeName, Type>, context: TypedNamelessTerm): TypingResult<Type> = when (this) {
@@ -129,5 +155,17 @@ private fun Type.resolveUserType(userTypes: Map<TypeName, Type>, context: TypedN
 		if (actualType == null) Error("Unknown type $this.", context)
 		else Ok(actualType)
 	}
-	else -> Ok(this)
+	is FunctionType -> from.resolveUserType(userTypes, context).flatMap { fromType ->
+		to.resolveUserType(userTypes, context).map {  toType ->
+			FunctionType(fromType, toType)
+		}
+	}
+	is RecordType -> types.mapValues { it.value.resolveUserType(userTypes, context) }.sequence().map {
+		RecordType(it)
+	}
+	Nat, Bool, Type.Unit, Top -> Ok(this)
+	is Ref -> of.resolveUserType(userTypes, context).map { Ref(it) }
+	is Variant -> variants.mapValues { it.value.resolveUserType(userTypes, context) }.sequence().map {
+		Variant(it)
+	}
 }

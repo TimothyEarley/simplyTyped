@@ -43,6 +43,15 @@ sealed class TypedNamelessTerm {
 	data class Case(val on: TypedNamelessTerm, val cases: List<NamelessCasePattern>): TypedNamelessTerm() {
 		override fun toString(): String = "case $on of ${cases.joinToString()}"
 	}
+	data class Assign(val variable: TypedNamelessTerm, val term: TypedNamelessTerm): TypedNamelessTerm() {
+		override fun toString(): String = "$variable := $term"
+	}
+	data class Read(val variable: TypedNamelessTerm): TypedNamelessTerm() {
+		override fun toString(): String = "!$variable"
+	}
+	data class Ref(val term: TypedNamelessTerm): TypedNamelessTerm() {
+		override fun toString(): String = "ref $term"
+	}
 }
 
 fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
@@ -61,4 +70,7 @@ fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
 	is TypedNamelessTerm.Case -> UntypedNamelessTerm.Case(on.toUntyped(), cases.map {
 		UntypedNamelessCasePattern(it.slot, it.term.toUntyped())
 	})
+	is TypedNamelessTerm.Read -> UntypedNamelessTerm.Read(variable.toUntyped())
+	is TypedNamelessTerm.Assign -> UntypedNamelessTerm.Assign(variable.toUntyped(), term.toUntyped())
+	is TypedNamelessTerm.Ref -> UntypedNamelessTerm.Ref(term.toUntyped())
 }

@@ -12,7 +12,7 @@ import kotlin.system.exitProcess
 fun main() {
 	//TODO add actual numbers
 
-	val src = SimplyTypedGrammar::class.java.getResourceAsStream("/sequence.tl")
+	val src = SimplyTypedGrammar::class.java.getResourceAsStream("/refs.tl")
 		.readBytes().decodeToString()
 	val tokens = lex("($src)", values(), EOF)
 		.filter { it.type != WS }

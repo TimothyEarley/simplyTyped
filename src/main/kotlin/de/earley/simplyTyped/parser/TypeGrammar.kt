@@ -52,8 +52,13 @@ object TypeGrammar {
 		Type.Variant(variants.toMap())
 	}
 
+	private val refType: P<Type.Ref> = context("ref type") {
+		isAMatch(Identifier, "Ref").void() + type
+	}.map(Type::Ref)
+
 	val type: P<Type> = context("type") {
 		parenType or
+		refType or
 		functionType or
 		natType or
 		boolType or

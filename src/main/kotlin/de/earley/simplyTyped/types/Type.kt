@@ -27,6 +27,10 @@ sealed class Type {
 		override fun toString(): String = "Top"
 	}
 
+	data class Ref(val of: Type): Type() {
+		override fun toString(): String = "Ref $of"
+	}
+
 	data class Variant(val variants: Map<TypeName, Type>): Type() {
 		override fun toString(): String = "<${variants.entries.joinToString { (k, v) -> "$k = $v" }}>"
 	}

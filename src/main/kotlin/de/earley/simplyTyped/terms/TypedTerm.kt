@@ -52,6 +52,15 @@ sealed class TypedTerm {
 	data class Case(val on: TypedTerm, val cases: List<CasePattern>): TypedTerm() {
 		override fun toString(): String = "case $on of ${cases.joinToString()}"
 	}
+	data class Assign(val variable: TypedTerm, val term: TypedTerm): TypedTerm() {
+		override fun toString(): String = "$variable := $term"
+	}
+	data class Read(val variable: TypedTerm): TypedTerm() {
+		override fun toString(): String = "!$variable"
+	}
+	data class Ref(val term: TypedTerm): TypedTerm() {
+		override fun toString(): String = "ref $term"
+	}
 }
 
 //fix (λx : T.t1)
@@ -104,6 +113,9 @@ fun TypedTerm.toNameless(
 	is Case -> TypedNamelessTerm.Case(on.toNameless(bindings), cases.map {
 		NamelessCasePattern(it.slot, it.term.toNameless(bindings + it.variableName))
 	})
+	is Assign -> TypedNamelessTerm.Assign(variable.toNameless(bindings), term.toNameless(bindings))
+	is Read -> TypedNamelessTerm.Read(variable.toNameless(bindings))
+	is Ref -> TypedNamelessTerm.Ref(term.toNameless(bindings))
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
@@ -120,7 +132,12 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is TypeDef -> body.freeVariables()
 	is Variant -> term.freeVariables()
 	is Case -> on.freeVariables() + cases.flatMap { it.freeVariables() }
+	is Assign -> variable.freeVariables() + term.freeVariables()
+	is Read -> variable.freeVariables()
+	is Ref -> term.freeVariables()
 }
 
 // use erasure
-fun TypedTerm.eval() = toNameless(emptyMap()).toUntyped().eval()
+fun TypedTerm.eval() = toNameless(emptyMap())
+	.toUntyped()
+	.eval()

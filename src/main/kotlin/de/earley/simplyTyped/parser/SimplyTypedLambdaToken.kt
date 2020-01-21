@@ -20,6 +20,7 @@ enum class SimplyTypedLambdaToken(r: String): TokenType {
 	Unit("unit"),
 	TypeDef("type"),
 	Case("case"),
+	Ref("ref"),
 	// other tokens
 	Dot("\\."),
 	OpenParen("\\("),
@@ -32,6 +33,7 @@ enum class SimplyTypedLambdaToken(r: String): TokenType {
 	Comma(","),
 	Colon(":"),
 	SemiColon(";"),
+	Exclamation("!"),
 	Arrow("->"),
 	Equals("="),
 	Number("\\d+"),

@@ -37,13 +37,14 @@ object TermGrammar {
 	 */
 	val safeTerm = context("safe term") {
 		parenTerm or
-		variable or
 		UnitParser.unit or
 		LetBindingGrammar.binding or
 		TypeDefGrammar.typeDef or
 		VariantGrammar.variants or
 		RecordGrammar.record or
-		ArithmeticGrammar.arithmeticExpression
+		ArithmeticGrammar.arithmeticExpression or
+		RefsGrammar.refs or //TODO refs with sequence needs brackets. This is not nice
+		variable
 	}
 
 

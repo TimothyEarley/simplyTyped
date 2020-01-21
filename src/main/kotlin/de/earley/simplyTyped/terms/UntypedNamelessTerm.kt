@@ -50,6 +50,19 @@ sealed class UntypedNamelessTerm {
 	}
 	data class Case(val on: UntypedNamelessTerm, val cases: List<UntypedNamelessCasePattern>): UntypedNamelessTerm() {
 		override fun toString(): String = "case $on of ${cases.joinToString(separator = "|")}"
-	}}
+	}
+	data class Assign(val variable: UntypedNamelessTerm, val term: UntypedNamelessTerm): UntypedNamelessTerm() {
+		override fun toString(): String = "$variable := $term"
+	}
+	data class Read(val variable: UntypedNamelessTerm): UntypedNamelessTerm() {
+		override fun toString(): String = "!$variable"
+	}
+	data class Ref(val term: UntypedNamelessTerm): UntypedNamelessTerm() {
+		override fun toString(): String = "ref $term"
+	}
+	class Label(val index: Int): UntypedNamelessTerm() {
+		override fun toString(): String = "l$index"
+	}
+}
 
 //TODO add function to create a pure lambda calculus version
