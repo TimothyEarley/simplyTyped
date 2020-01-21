@@ -1,5 +1,7 @@
 package de.earley.simplyTyped.terms
 
+import de.earley.simplyTyped.types.Type
+
 sealed class UntypedNamelessTerm {
 	data class Variable(val number: Int): UntypedNamelessTerm() {
 		override fun toString(): String = "v$number"
@@ -43,6 +45,11 @@ sealed class UntypedNamelessTerm {
 	object Unit : UntypedNamelessTerm() {
 		override fun toString(): String = "unit"
 	}
-}
+	data class Variant(val slot: String, val term: UntypedNamelessTerm): UntypedNamelessTerm() {
+		override fun toString(): String = "<$slot = $term>"
+	}
+	data class Case(val on: UntypedNamelessTerm, val cases: List<UntypedNamelessCasePattern>): UntypedNamelessTerm() {
+		override fun toString(): String = "case $on of ${cases.joinToString(separator = "|")}"
+	}}
 
 //TODO add function to create a pure lambda calculus version

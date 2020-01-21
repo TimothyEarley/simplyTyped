@@ -77,6 +77,14 @@ private fun UntypedNamelessTerm.evalStep(): UntypedNamelessTerm = when {
 		/*E-Fix*/ !func.isValue() -> copy(func.evalStep())
 		else -> error("cannot apply fix to $func")
 	}
+	this is Variant -> {
+		/*E-Variant*/ copy(term = term.evalStep())
+	}
+	this is Case -> when {
+		on !is Variant -> error("attempted case on a non variant: $this")
+		/*E-CaseVariant*/ on.isValue() -> (cases.find { it.slot == this.on.slot } ?: error("case does not match!")).term.sub(0, on)
+		/*E-Case*/ else -> copy(on = on.evalStep())
+	}
 	else -> error("No applicable rule for $this!")
 }
 
@@ -108,6 +116,8 @@ private fun UntypedNamelessTerm.isValue(): Boolean = when (this) {
 	is IfThenElse -> false
 	is Fix -> false
 	is UntypedNamelessTerm.Unit -> true
+	is Variant -> term.isValue()
+	is Case -> false
 }
 
 /**
@@ -124,6 +134,8 @@ private fun UntypedNamelessTerm.shift(d: Int, c: Int): UntypedNamelessTerm = whe
 	is IfThenElse -> IfThenElse(condition.shift(d, c), then.shift(d, c), `else`.shift(d, c))
 	is Fix -> Fix(func.shift(d, c))
 	is UntypedNamelessTerm.Unit -> UntypedNamelessTerm.Unit
+	is Variant -> Variant(slot, term.shift(d, c))
+	is Case -> Case(on.shift(d, c), cases.map { it.copy(term = it.term.shift(d, c + 1)) })
 }
 
 /**
@@ -140,4 +152,6 @@ private fun UntypedNamelessTerm.sub(num: Int, replacement: UntypedNamelessTerm):
 	is IfThenElse -> IfThenElse(condition.sub(num, replacement), then.sub(num, replacement), `else`.sub(num, replacement))
 	is Fix -> Fix(func.sub(num, replacement))
 	is UntypedNamelessTerm.Unit -> UntypedNamelessTerm.Unit
+	is Variant -> Variant(slot, term.sub(num, replacement))
+	is Case -> Case(on.sub(num, replacement), cases.map { it.copy(term = it.term.sub(num + 1, replacement.shift(1, 0))) })
 }

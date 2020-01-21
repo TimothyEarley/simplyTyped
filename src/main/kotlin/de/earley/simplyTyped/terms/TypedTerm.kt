@@ -46,6 +46,12 @@ sealed class TypedTerm {
 	data class TypeDef(val name: VariableName, val type: Type, val body: TypedTerm): TypedTerm() {
 		override fun toString(): String = "type $name = $type in $body"
 	}
+	data class Variant(val slot: String, val term: TypedTerm, val type: Type): TypedTerm() {
+		override fun toString(): String = "<$slot = $term> as $type"
+	}
+	data class Case(val on: TypedTerm, val cases: List<CasePattern>): TypedTerm() {
+		override fun toString(): String = "case $on of ${cases.joinToString()}"
+	}
 }
 
 //fix (λx : T.t1)
@@ -58,6 +64,8 @@ fun numberTerm(n: Int): TypedTerm =
 
 typealias Bindings = Map<String, Int>
 fun Bindings.inc(): Bindings = this.mapValues { (_, v) -> v + 1 }
+operator fun Bindings.plus(variable: VariableName) = inc() + (variable to 0)
+
 fun TypedTerm.toNameless(
 	bindings: Bindings
 ): TypedNamelessTerm = when (this) {
@@ -66,7 +74,7 @@ fun TypedTerm.toNameless(
 	)
 	is Abstraction -> TypedNamelessTerm.Abstraction(
 		this.argType,
-		body.toNameless(bindings.inc() + (binder to 0))
+		body.toNameless(bindings + binder)
 	)
 	is App -> TypedNamelessTerm.App(
 		left.toNameless(
@@ -77,7 +85,7 @@ fun TypedTerm.toNameless(
 	is LetBinding -> TypedNamelessTerm.LetBinding(
 		bound.toNameless(
 			bindings
-		), expression.toNameless(bindings.inc() + (binder to 0))
+		), expression.toNameless(bindings + binder)
 	)
 	is Record -> TypedNamelessTerm.Record(contents.mapValues { it.value.toNameless(bindings) })
 	is RecordProjection -> TypedNamelessTerm.RecordProjection(
@@ -92,6 +100,10 @@ fun TypedTerm.toNameless(
 	is Fix -> TypedNamelessTerm.Fix(func.toNameless(bindings))
 	is TypedTerm.Unit -> TypedNamelessTerm.Unit
 	is TypeDef -> TypedNamelessTerm.TypeDef(name, type, body.toNameless(bindings))
+	is Variant -> TypedNamelessTerm.Variant(slot, term.toNameless(bindings), type)
+	is Case -> TypedNamelessTerm.Case(on.toNameless(bindings), cases.map {
+		NamelessCasePattern(it.slot, it.term.toNameless(bindings + it.variableName))
+	})
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
@@ -106,6 +118,8 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is Fix -> func.freeVariables()
 	is TypedTerm.Unit -> emptySet()
 	is TypeDef -> body.freeVariables()
+	is Variant -> term.freeVariables()
+	is Case -> on.freeVariables() + cases.flatMap { it.freeVariables() }
 }
 
 // use erasure

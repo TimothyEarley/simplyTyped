@@ -37,6 +37,12 @@ sealed class TypedNamelessTerm {
 	data class TypeDef(val name: VariableName, val type: Type, val body: TypedNamelessTerm): TypedNamelessTerm() {
 		override fun toString(): String = "type $name = $type in"
 	}
+	data class Variant(val slot: String, val term: TypedNamelessTerm, val type: Type): TypedNamelessTerm() {
+		override fun toString(): String = "<$slot = $term> as $type"
+	}
+	data class Case(val on: TypedNamelessTerm, val cases: List<NamelessCasePattern>): TypedNamelessTerm() {
+		override fun toString(): String = "case $on of ${cases.joinToString()}"
+	}
 }
 
 fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
@@ -51,4 +57,8 @@ fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
 	is TypedNamelessTerm.Fix -> UntypedNamelessTerm.Fix(func.toUntyped())
 	is TypedNamelessTerm.Unit -> UntypedNamelessTerm.Unit
 	is TypedNamelessTerm.TypeDef -> body.toUntyped() // remove type info
+	is TypedNamelessTerm.Variant -> UntypedNamelessTerm.Variant(slot, term.toUntyped())
+	is TypedNamelessTerm.Case -> UntypedNamelessTerm.Case(on.toUntyped(), cases.map {
+		UntypedNamelessCasePattern(it.slot, it.term.toUntyped())
+	})
 }

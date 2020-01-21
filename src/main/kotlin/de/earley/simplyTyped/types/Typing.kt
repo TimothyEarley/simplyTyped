@@ -87,6 +87,39 @@ private fun TypedNamelessTerm.type(
 	}
 	is TypedNamelessTerm.Unit -> Ok(Type.Unit)
 	is TypedNamelessTerm.TypeDef -> body.type(variableTypes, userTypes + (name to type))
+	is TypedNamelessTerm.Variant -> term.type(variableTypes, userTypes).flatMap { termType ->
+		type.resolveUserType(userTypes, this).flatMap { actualType ->
+			if (actualType !is Variant) Error("variants must be variant type, not $actualType.", this)
+			else {
+				if (!actualType.variants.containsKey(slot)) Error(
+					"variant has type $actualType, but the key $actualType is not found.",
+					this
+				)
+				val checkType = actualType.variants.getValue(slot)
+				if (checkType != termType) Error(
+					"type $termType does not match variant type $checkType",
+					this
+				)
+				Ok(actualType)
+			}
+		}
+	}
+	is TypedNamelessTerm.Case -> on.type(variableTypes, userTypes).flatMap { onType ->
+		if (onType !is Variant) Error("Can only do case of on variant type, not $onType", this)
+		else {
+			cases.map {
+				val slotType = onType.variants[it.slot]
+				if (slotType == null) Error("pattern in case is wrong!", this)
+				else {
+					it.term.type(variableTypes + slotType, userTypes)
+				}
+			}.sequence().flatMap { patternTypes ->
+				val firstType = patternTypes.first()
+				if (patternTypes.all { it == firstType }) Ok(firstType)
+				else Error("cases do not have the same type: $patternTypes", this)
+			}
+		}
+	}
 }
 
 private fun Type.resolveUserType(userTypes: Map<TypeName, Type>, context: TypedNamelessTerm): TypingResult<Type> = when (this) {

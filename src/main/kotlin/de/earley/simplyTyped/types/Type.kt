@@ -24,6 +24,10 @@ sealed class Type {
 		override fun toString(): String = "Unit"
 	}
 
+	data class Variant(val variants: Map<TypeName, Type>): Type() {
+		override fun toString(): String = "<${variants.entries.joinToString { (k, v) -> "$k = $v" }}>"
+	}
+
 	data class UserType(val name: TypeName) : Type() {
 		override fun toString(): String = name
 	}

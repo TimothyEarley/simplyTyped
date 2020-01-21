@@ -5,6 +5,8 @@ let and = λ a:Bool . λ b:Bool . if a
 	else false
 in
 
+let not = λ b:Bool . if b then false else true in
+
 letrec equal : Nat -> Nat -> Bool =
 	λ a:Nat . λ b:Nat . if iszero a
 		then iszero b
@@ -37,8 +39,22 @@ letrec factorialAndSum : Nat -> {factorial : Nat, sum: Nat} = λ n:Nat .
 		}
 in
 
+type NatBool = <nat = Nat, bool = Bool> in
+
+let natOrBool = λ b : Bool . if b
+	then <bool = (not true)> as NatBool
+	else <nat = 1> as NatBool
+in
+
+let backToBool = λ nb : NatBool . case nb of
+	  <nat = n> => false
+	| <bool = b> => true
+in
+
 {
 	timesWorks = ((equal ((times 3) 4)) ((times 4) 3)),
 	facsum = (factorialAndSum 5),
-	u = unit
+	u = unit,
+	variantTest = (backToBool (natOrBool true)),
+	variantTestTwo = (backToBool (natOrBool false)),
 }

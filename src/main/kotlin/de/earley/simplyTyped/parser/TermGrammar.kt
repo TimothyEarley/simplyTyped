@@ -41,6 +41,7 @@ object TermGrammar {
 		UnitParser.unit or
 		LetBindingGrammar.binding or
 		TypeDefGrammar.typeDef or
+		VariantGrammar.variants or
 		RecordGrammar.record or
 		ArithmeticGrammar.arithmeticExpression
 	}

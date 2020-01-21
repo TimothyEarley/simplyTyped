@@ -6,6 +6,7 @@ import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 import de.earley.simplyTyped.terms.*
 import de.earley.simplyTyped.types.recover
 import de.earley.simplyTyped.types.type
+import kotlin.system.exitProcess
 
 @ExperimentalStdlibApi
 fun main() {
@@ -19,7 +20,10 @@ fun main() {
 
 	require(parsed.freeVariables().isEmpty()) { "free variables: " + parsed.freeVariables() }
 
-	val type = parsed.type().recover { error("Typechecking error: $it \n $parsed") }
+	val type = parsed.type().recover {
+		println("Typing error: ${it.msg} \nin ${it.element}")
+		exitProcess(1)
+	}
 
 	println("$parsed : $type")
 	println("~>")

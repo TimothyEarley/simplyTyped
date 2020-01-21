@@ -1,7 +1,6 @@
 package de.earley.simplyTyped.types
 
 import de.earley.simplyTyped.terms.TypedNamelessTerm
-import java.lang.Error
 
 sealed class TypingResult<out T> {
 	data class Ok<T>(val type: T): TypingResult<T>()
@@ -23,7 +22,12 @@ fun <T> TypingResult<T>.recover(f: (TypingResult.Error) -> T): TypingResult.Ok<T
 	is TypingResult.Error -> TypingResult.Ok(f(this))
 }
 
-fun <T> Collection<TypingResult<T>>.sequence(): TypingResult<Collection<T>> = TODO()
+fun <T> Collection<TypingResult<T>>.sequence(): TypingResult<Collection<T>> {
+	val (errors, oks) = partition { it is TypingResult.Error }
+	return if (errors.isEmpty()) TypingResult.Ok(oks.map { (it as TypingResult.Ok).type })
+	else errors.first() as TypingResult.Error
+}
+
 fun <K, T> Map<K, TypingResult<T>>.sequence(): TypingResult<Map<K, T>> {
 	val (errors, oks) = entries.partition { it.value is TypingResult.Error }
 	return if (errors.isEmpty()) TypingResult.Ok(oks.map { it.key to (it.value as TypingResult.Ok).type }.toMap() )

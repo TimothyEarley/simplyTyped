@@ -36,7 +36,15 @@ object TypeGrammar {
 		isA(Identifier).string
 	}.map(Type::UserType)
 
+	private val variantType: P<Type> = context("variant type") {
+		isA(OpenAngle).void() +
+		many(isA(Identifier).string + isA(Equals).void() + type, isA(Comma)) +
+		isA(ClosedAngle).void()
+	}.map { variants ->
+		Type.Variant(variants.toMap())
+	}
+
 	val type: P<Type> = context("type") {
-		parenType or functionType or natType or boolType or recordType or userType
+		parenType or functionType or natType or boolType or recordType or variantType or userType
 	}
 }
