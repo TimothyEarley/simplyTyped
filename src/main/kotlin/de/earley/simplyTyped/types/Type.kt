@@ -29,6 +29,6 @@ sealed class Type {
 	}
 
 	data class UserType(val name: TypeName) : Type() {
-		override fun toString(): String = name
+		override fun toString(): String = "U:$name"
 	}
 }

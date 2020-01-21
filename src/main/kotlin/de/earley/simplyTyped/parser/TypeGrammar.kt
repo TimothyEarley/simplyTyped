@@ -22,8 +22,12 @@ object TypeGrammar {
 		isAMatch(Identifier, "Nat").map { Type.Nat }
 	}
 
-	private val boolType: P<Type.Bool> = context("nat type") {
+	private val boolType: P<Type.Bool> = context("bool type") {
 		isAMatch(Identifier, "Bool").map { Type.Bool }
+	}
+
+	private val unitType: P<Type.Unit> = context("unit type") {
+		isAMatch(Identifier, "Unit").map { Type.Unit }
 	}
 
 	private val recordType: P<Type.RecordType> = context("record type") {
@@ -45,6 +49,13 @@ object TypeGrammar {
 	}
 
 	val type: P<Type> = context("type") {
-		parenType or functionType or natType or boolType or recordType or variantType or userType
+		parenType or
+		functionType or
+		natType or
+		boolType or
+		unitType or
+		recordType or
+		variantType or
+		userType
 	}
 }

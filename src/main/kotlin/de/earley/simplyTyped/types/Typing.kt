@@ -89,18 +89,17 @@ private fun TypedNamelessTerm.type(
 	is TypedNamelessTerm.TypeDef -> body.type(variableTypes, userTypes + (name to type))
 	is TypedNamelessTerm.Variant -> term.type(variableTypes, userTypes).flatMap { termType ->
 		type.resolveUserType(userTypes, this).flatMap { actualType ->
-			if (actualType !is Variant) Error("variants must be variant type, not $actualType.", this)
-			else {
-				if (!actualType.variants.containsKey(slot)) Error(
+			when {
+				actualType !is Variant -> Error("variants must be variant type, not $actualType.", this)
+				!actualType.variants.containsKey(slot) -> Error(
 					"variant has type $actualType, but the key $actualType is not found.",
 					this
 				)
-				val checkType = actualType.variants.getValue(slot)
-				if (checkType != termType) Error(
-					"type $termType does not match variant type $checkType",
+				actualType.variants.getValue(slot) == termType -> Error(
+					"type $termType does not match variant type ${actualType.variants.getValue(slot)}",
 					this
 				)
-				Ok(actualType)
+				else -> Ok(actualType)
 			}
 		}
 	}
