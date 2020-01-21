@@ -43,6 +43,9 @@ sealed class TypedTerm {
 	object Unit : TypedTerm() {
 		override fun toString(): String = "unit"
 	}
+	data class TypeDef(val name: VariableName, val type: Type, val body: TypedTerm): TypedTerm() {
+		override fun toString(): String = "type $name = $type in $body"
+	}
 }
 
 //fix (λx : T.t1)
@@ -88,6 +91,7 @@ fun TypedTerm.toNameless(
 	)
 	is Fix -> TypedNamelessTerm.Fix(func.toNameless(bindings))
 	is TypedTerm.Unit -> TypedNamelessTerm.Unit
+	is TypeDef -> TypedNamelessTerm.TypeDef(name, type, body.toNameless(bindings))
 }
 
 fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
@@ -101,6 +105,7 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is IfThenElse -> condition.freeVariables() + then.freeVariables() + `else`.freeVariables()
 	is Fix -> func.freeVariables()
 	is TypedTerm.Unit -> emptySet()
+	is TypeDef -> body.freeVariables()
 }
 
 // use erasure

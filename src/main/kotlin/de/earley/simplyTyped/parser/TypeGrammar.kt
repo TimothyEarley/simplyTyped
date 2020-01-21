@@ -32,7 +32,11 @@ object TypeGrammar {
 		isA(ClosedBracket).void()
 	}.map { types -> Type.RecordType(types.toMap()) }
 
+	private val userType: P<Type.UserType> = context("user type") {
+		isA(Identifier).string
+	}.map(Type::UserType)
+
 	val type: P<Type> = context("type") {
-		parenType or functionType or natType or boolType or recordType
+		parenType or functionType or natType or boolType or recordType or userType
 	}
 }

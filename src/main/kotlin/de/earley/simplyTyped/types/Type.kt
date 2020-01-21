@@ -2,6 +2,8 @@ package de.earley.simplyTyped.types
 
 import de.earley.simplyTyped.terms.VariableName
 
+typealias TypeName = String
+
 sealed class Type {
 	data class FunctionType(val from: Type, val to: Type): Type() {
 		override fun toString(): String = "$from -> $to"
@@ -20,5 +22,9 @@ sealed class Type {
 	}
 	object Unit : Type() {
 		override fun toString(): String = "Unit"
+	}
+
+	data class UserType(val name: TypeName) : Type() {
+		override fun toString(): String = name
 	}
 }

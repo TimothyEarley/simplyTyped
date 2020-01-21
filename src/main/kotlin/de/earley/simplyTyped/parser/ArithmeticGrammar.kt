@@ -2,24 +2,22 @@ package de.earley.simplyTyped.parser
 
 import de.earley.parser.combinators.*
 import de.earley.parser.context
-import de.earley.simplyTyped.terms.Keyword
-import de.earley.simplyTyped.terms.Keyword.*
-import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
+import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.Number
+import de.earley.simplyTyped.terms.Keyword.Arithmetic
+import de.earley.simplyTyped.terms.Keyword.Bools
+import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.terms.numberTerm
 
-private fun keyword(type: Keyword): P<TypedTerm.KeywordTerm> = context(type.name) {
-	isAMatch(Identifier, type.name).map { TypedTerm.KeywordTerm(type) }
-}
-
-//TODO if expressions
 object ArithmeticGrammar {
 
-	private val functions = (
-			(
-					keyword(Arithmetic.Succ) or keyword(Arithmetic.Pred) or keyword(Arithmetic.IsZero)
-					) +
-					TermGrammar.safeTerm ).map(TypedTerm::App) //TODO we could add something else here
+	private val functions = context("arith function") {
+		((
+			isA(Succ).map { Arithmetic.Succ } or
+			isA(Pred).map { Arithmetic.Pred } or
+			isA(IsZero).map { Arithmetic.IsZero }
+		).map(TypedTerm::KeywordTerm) + TermGrammar.safeTerm ).map(TypedTerm::App)
+	}
 
 	private val ifThenElse: P<TypedTerm.IfThenElse> = context("if then else") {
 		isA(If).void() +

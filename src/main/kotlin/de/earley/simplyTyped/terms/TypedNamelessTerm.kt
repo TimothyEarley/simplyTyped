@@ -34,6 +34,9 @@ sealed class TypedNamelessTerm {
 	object Unit : TypedNamelessTerm() {
 		override fun toString(): String = "unit"
 	}
+	data class TypeDef(val name: VariableName, val type: Type, val body: TypedNamelessTerm): TypedNamelessTerm() {
+		override fun toString(): String = "type $name = $type in"
+	}
 }
 
 fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
@@ -47,4 +50,5 @@ fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
 	is TypedNamelessTerm.IfThenElse -> UntypedNamelessTerm.IfThenElse(condition.toUntyped(), then.toUntyped(), `else`.toUntyped())
 	is TypedNamelessTerm.Fix -> UntypedNamelessTerm.Fix(func.toUntyped())
 	is TypedNamelessTerm.Unit -> UntypedNamelessTerm.Unit
+	is TypedNamelessTerm.TypeDef -> body.toUntyped() // remove type info
 }

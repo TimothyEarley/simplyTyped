@@ -35,10 +35,16 @@ object TermGrammar {
 	/**
 	 * A safe term has a well defined end and pattern
 	 */
-	val safeTerm =
-		parenTerm or LetBindingGrammar.binding or RecordGrammar.record or context("atomic") {
-			UnitParser.unit or ArithmeticGrammar.arithmeticExpression or variable
-		}
+	val safeTerm = context("safe term") {
+		parenTerm or
+		variable or
+		UnitParser.unit or
+		LetBindingGrammar.binding or
+		TypeDefGrammar.typeDef or
+		RecordGrammar.record or
+		ArithmeticGrammar.arithmeticExpression
+	}
+
 
 	val term: P<TypedTerm> = context("term") {
 		app or

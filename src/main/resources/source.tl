@@ -1,3 +1,5 @@
+type BiOp = Nat -> Nat -> Nat in
+
 let and = λ a:Bool . λ b:Bool . if a
 	then b
 	else false
@@ -11,13 +13,13 @@ letrec equal : Nat -> Nat -> Bool =
 			else (equal (pred a)) (pred b)
 in
 
-letrec add : Nat -> Nat -> Nat =
+letrec add : BiOp =
 	λ a:Nat . λ b:Nat . if iszero a
 		then b
 		else succ ((add (pred a)) b)
 in
 
-letrec times : Nat -> Nat -> Nat =
+letrec times : BiOp =
 	λ a:Nat . λ b:Nat . if iszero a
 		then 0
 		else if (equal a) 1
