@@ -1,14 +1,7 @@
 package de.earley.simplyTyped.terms
 
-import de.earley.parser.combinators.isAMatch
-import de.earley.parser.combinators.map
-import de.earley.parser.context
-import de.earley.simplyTyped.eval
-import de.earley.simplyTyped.parser.SimplyTypedLambdaToken
 import de.earley.simplyTyped.terms.TypedTerm.*
 import de.earley.simplyTyped.types.Type
-import java.util.concurrent.locks.Condition
-import kotlin.math.exp
 
 typealias VariableName = String
 

@@ -35,7 +35,7 @@ object TermGrammar {
 	/**
 	 * A safe term has a well defined end and pattern
 	 */
-	val safeTerm = context("safe term") {
+	val safeTerm : P<TypedTerm> = context("safe term") {
 		parenTerm or
 		UnitParser.unit or
 		LetBindingGrammar.binding or

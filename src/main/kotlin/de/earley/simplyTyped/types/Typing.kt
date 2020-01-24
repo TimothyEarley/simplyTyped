@@ -51,12 +51,12 @@ private fun TypedNamelessTerm.type(
 			}
 	}
 	is TypedNamelessTerm.Record -> {
-			contents.mapValues { it.value.type(variableTypes) }
-				.sequence()
-				.map { types ->
-					RecordType(types)
-				}
-		}
+		contents.mapValues { it.value.type(variableTypes) }
+			.sequence()
+			.map { types ->
+				RecordType(types)
+			}
+	}
 	is TypedNamelessTerm.RecordProjection -> {
 		record.type(variableTypes)
 			.flatMap { recordType ->
@@ -88,7 +88,7 @@ private fun TypedNamelessTerm.type(
 					Ok(funcType.from)
 
 				else ->
-					Error("Fix cannot be applied to ${funcType.from} -> ${funcType.to}", this)
+					Error("Fix cannot be applied to (${funcType.from}) -> (${funcType.to})", this)
 			}
 		}
 	}
@@ -136,6 +136,24 @@ private fun TypedNamelessTerm.type(
 		else Error("Cannot dereference a non Ref type: $it", this)
 	}
 	is TypedNamelessTerm.Ref -> term.type(variableTypes).map {
-		/*T-Ref*/ Type.Ref(it)
+		/*T-Ref*/ Ref(it)
+	}
+	is TypedNamelessTerm.Fold -> when (type) {
+		/*T-Fld*/ is RecursiveType -> term.type(variableTypes).flatMap { termType ->
+			if (termType == type.unfold()) Ok(type)
+			else Error("Failed to fold type $termType to $type", this)
+		}
+		else -> Error("Can only fold recursive types", this)
+	}
+	is TypedNamelessTerm.Unfold -> when (type) {
+		is RecursiveType -> TODO()
+		null -> {
+			// we need to deduce the type
+			term.type(variableTypes.mapValues { (_, v) ->
+				if (v is RecursiveType) v.unfold()
+				else v
+			})
+		}
+		else -> Error("Can only unfold on recursive types", this)
 	}
 }

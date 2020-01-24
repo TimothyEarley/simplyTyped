@@ -11,7 +11,6 @@ fun eval(term: UntypedNamelessTerm): UntypedNamelessTerm {
 	while(! current.expr.isValue()) {
 		current = current.evalStep()
 		//TODO GC
-		println(current)
 	}
 	return current.expr.queryMemory(current.memory)
 }

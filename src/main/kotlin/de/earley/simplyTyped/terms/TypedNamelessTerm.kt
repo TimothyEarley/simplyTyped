@@ -52,6 +52,12 @@ sealed class TypedNamelessTerm {
 	data class Ref(val term: TypedNamelessTerm): TypedNamelessTerm() {
 		override fun toString(): String = "ref $term"
 	}
+	data class Fold(val type: Type, val term: TypedNamelessTerm): TypedNamelessTerm() {
+		override fun toString(): String = "fold[$type] $term"
+	}
+	data class Unfold(val type: Type?, val term: TypedNamelessTerm): TypedNamelessTerm() {
+		override fun toString(): String = "unfold[$type] $term"
+	}
 }
 
 fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
@@ -73,4 +79,6 @@ fun TypedNamelessTerm.toUntyped(): UntypedNamelessTerm = when (this) {
 	is TypedNamelessTerm.Read -> UntypedNamelessTerm.Read(variable.toUntyped())
 	is TypedNamelessTerm.Assign -> UntypedNamelessTerm.Assign(variable.toUntyped(), term.toUntyped())
 	is TypedNamelessTerm.Ref -> UntypedNamelessTerm.Ref(term.toUntyped())
+	is TypedNamelessTerm.Fold -> term.toUntyped() //TODO what would be the use of moving it to runtime?
+	is TypedNamelessTerm.Unfold -> term.toUntyped()
 }

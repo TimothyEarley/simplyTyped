@@ -23,6 +23,8 @@ private fun TypedNamelessTerm.resolveUserTypes(userTypes: Map<TypeName, Type>): 
 	is Assign -> Assign(variable.resolveUserTypes(userTypes), term.resolveUserTypes(userTypes))
 	is Read -> Read(variable.resolveUserTypes(userTypes))
 	is Ref -> Ref(term.resolveUserTypes(userTypes))
+	is Fold -> TODO()
+	is Unfold -> TODO()
 }
 
 private fun Type.resolve(userTypes: Map<TypeName, Type>, context: TypedNamelessTerm): Type = resolveUserType(userTypes, context).recover {
@@ -50,4 +52,10 @@ private fun Type.resolveUserType(userTypes: Map<TypeName, Type>, context: TypedN
 	is Type.Variant -> variants.mapValues { it.value.resolveUserType(userTypes, context) }.sequence().map {
 		Type.Variant(it)
 	}
+	is Type.RecursiveType -> {
+		body.resolveUserType(userTypes + (binder to Type.TypeVariable(binder)), context).map {
+			Type.RecursiveType(binder, it)
+		}
+	}
+	is Type.TypeVariable -> TODO()
 }

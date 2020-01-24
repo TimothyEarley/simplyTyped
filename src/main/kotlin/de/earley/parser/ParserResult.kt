@@ -1,5 +1,7 @@
 package de.earley.parser
 
+import kotlin.system.exitProcess
+
 /**
  * Output of a parser
  */
@@ -99,9 +101,10 @@ fun <Type:TokenType, R, A> ParserResult<Type, R>.fold(
 	is ParserResult.Error -> left(this)
 }
 
-fun <Type:TokenType, R> ParserResult<Type, R>.orThrow() = fold(
+fun <Type:TokenType, R> ParserResult<Type, R>.orExit() = fold(
 	{
-		error(this)
+		System.err.println(it)
+		exitProcess(1)
 	},
 	{it.result}
 )

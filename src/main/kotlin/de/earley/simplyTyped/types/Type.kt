@@ -8,9 +8,7 @@ sealed class Type {
 	data class FunctionType(val from: Type, val to: Type): Type() {
 		override fun toString(): String = "$from -> $to"
 	}
-//	data class Base(val name: String) : Type() {
-//		override fun toString(): String = name
-//	}
+
 	data class RecordType(val types: Map<VariableName, Type>): Type() {
 		override fun toString(): String = "{${types.entries.joinToString()}}"
 	}
@@ -33,6 +31,14 @@ sealed class Type {
 
 	data class Variant(val variants: Map<TypeName, Type>): Type() {
 		override fun toString(): String = "<${variants.entries.joinToString { (k, v) -> "$k = $v" }}>"
+	}
+
+	data class RecursiveType(val binder: TypeName, val body: Type): Type() {
+		override fun toString(): String = "μ $binder . $body"
+	}
+
+	data class TypeVariable(val name: TypeName): Type() {
+		override fun toString(): String = "v$name"
 	}
 
 	data class UserType(val name: TypeName) : Type() {

@@ -1,4 +1,4 @@
-type NatList = <
+rectype NatList = <
     nil  = Unit,
     cons = {head : Nat, tail : NatList}
 > in
@@ -13,9 +13,6 @@ in
 let isNil = λ l: NatList . case l of
 	<nil = _> => true
 	| <cons = _> => false
-in
-
-let no = <cons = {}> as NatList
 in
 
 (isNil nil)
