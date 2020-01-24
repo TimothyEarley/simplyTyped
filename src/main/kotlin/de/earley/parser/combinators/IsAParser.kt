@@ -1,6 +1,7 @@
 package de.earley.parser.combinators
 
 import de.earley.parser.*
+import de.earley.parser.SourcePosition
 
 class IsAParser<Type : TokenType>(
 	val context: ParserContext,
@@ -18,6 +19,10 @@ fun <Type : TokenType> ParserContext.isA(type: Type): Parser<Type, Token<Type>>
 		= IsAParser(this, type)
 
 val <Type : TokenType> Parser<Type, Token<Type>>.string get() = map { it.value }
+
+val <Type : TokenType> Parser<Type, Token<Type>>.src: Parser<Type, SourcePosition> get() = map {
+	it.src()
+}
 
 //CLEANUP
 class MatchParser<Type : TokenType>(

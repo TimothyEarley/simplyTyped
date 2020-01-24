@@ -13,14 +13,14 @@ object RecordGrammar {
 	}
 
 	val projection: P<TypedTerm.RecordProjection> = context("projection") {
-		TermGrammar.term + isA(Dot).void() + isA(Identifier).string
-	}.map(TypedTerm::RecordProjection)
+		TermGrammar.term + isA(Dot).src + isA(Identifier).string
+	}.map { record, src, project -> TypedTerm.RecordProjection(record, project, src) }
 
 
 	val record: P<TypedTerm.Record> = context("record") {
-		isA(OpenBracket).void() +
+		isA(OpenBracket).src +
 		many(recordEntry, delimiter = isA(type = Comma)) +
 		isA(ClosedBracket).void()
-	}.map { entries -> TypedTerm.Record(entries.toMap()) }
+	}.map { src, entries -> TypedTerm.Record(entries.toMap(), src) }
 
 }

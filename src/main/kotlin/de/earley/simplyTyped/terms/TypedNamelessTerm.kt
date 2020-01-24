@@ -1,61 +1,63 @@
 package de.earley.simplyTyped.terms
 
+import de.earley.parser.Locatable
+import de.earley.parser.SourcePosition
 import de.earley.simplyTyped.types.Type
 
-sealed class TypedNamelessTerm {
-	data class Variable(val number: Int): TypedNamelessTerm() {
+sealed class TypedNamelessTerm : Locatable {
+	data class Variable(val number: Int, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "v$number"
 	}
-	data class Abstraction(val argType: Type, val body: TypedNamelessTerm): TypedNamelessTerm(){
+	data class Abstraction(val argType: Type, val body: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm(){
 		override fun toString(): String = "(λ:$argType.$body)"
 	}
-	data class App(val left: TypedNamelessTerm, val right: TypedNamelessTerm): TypedNamelessTerm() {
+	data class App(val left: TypedNamelessTerm, val right: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "($left $right)"
 	}
-	data class KeywordTerm(val keyword: Keyword) : TypedNamelessTerm() {
+	data class KeywordTerm(val keyword: Keyword, override val src: SourcePosition) : TypedNamelessTerm() {
 		override fun toString(): String = keyword.toString()
 	}
-	data class LetBinding(val bound: TypedNamelessTerm, val expression: TypedNamelessTerm) : TypedNamelessTerm() {
+	data class LetBinding(val bound: TypedNamelessTerm, val expression: TypedNamelessTerm, override val src: SourcePosition) : TypedNamelessTerm() {
 		override fun toString(): String = "let v0 = $bound in $expression"
 	}
 	//TODO still named
-	data class Record(val contents: Map<VariableName, TypedNamelessTerm>) : TypedNamelessTerm() {
+	data class Record(val contents: Map<VariableName, TypedNamelessTerm>, override val src: SourcePosition) : TypedNamelessTerm() {
 		override fun toString(): String = "{${contents.entries.joinToString { (k, v) -> "$k = $v" }}}"
 	}
-	data class RecordProjection(val  record: TypedNamelessTerm, val project: VariableName): TypedNamelessTerm() {
+	data class RecordProjection(val  record: TypedNamelessTerm, val project: VariableName, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "${record}.$project"
 	}
-	data class IfThenElse(val condition: TypedNamelessTerm, val then: TypedNamelessTerm, val `else`: TypedNamelessTerm): TypedNamelessTerm() {
+	data class IfThenElse(val condition: TypedNamelessTerm, val then: TypedNamelessTerm, val `else`: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "if $condition then $then else $`else`"
 	}
-	data class Fix(val func: TypedNamelessTerm): TypedNamelessTerm() {
+	data class Fix(val func: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "fix $func"
 	}
-	object Unit : TypedNamelessTerm() {
+	data class Unit(override val src: SourcePosition) : TypedNamelessTerm() {
 		override fun toString(): String = "unit"
 	}
-	data class TypeDef(val name: VariableName, val type: Type, val body: TypedNamelessTerm): TypedNamelessTerm() {
+	data class TypeDef(val name: VariableName, val type: Type, val body: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "type $name = $type in"
 	}
-	data class Variant(val slot: String, val term: TypedNamelessTerm, val type: Type): TypedNamelessTerm() {
+	data class Variant(val slot: String, val term: TypedNamelessTerm, val type: Type, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "<$slot = $term> as $type"
 	}
-	data class Case(val on: TypedNamelessTerm, val cases: List<NamelessCasePattern>): TypedNamelessTerm() {
+	data class Case(val on: TypedNamelessTerm, val cases: List<NamelessCasePattern>, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "case $on of ${cases.joinToString()}"
 	}
-	data class Assign(val variable: TypedNamelessTerm, val term: TypedNamelessTerm): TypedNamelessTerm() {
+	data class Assign(val variable: TypedNamelessTerm, val term: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "$variable := $term"
 	}
-	data class Read(val variable: TypedNamelessTerm): TypedNamelessTerm() {
+	data class Read(val variable: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "!$variable"
 	}
-	data class Ref(val term: TypedNamelessTerm): TypedNamelessTerm() {
+	data class Ref(val term: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "ref $term"
 	}
-	data class Fold(val type: Type, val term: TypedNamelessTerm): TypedNamelessTerm() {
+	data class Fold(val type: Type, val term: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "fold[$type] $term"
 	}
-	data class Unfold(val type: Type?, val term: TypedNamelessTerm): TypedNamelessTerm() {
+	data class Unfold(val type: Type?, val term: TypedNamelessTerm, override val src: SourcePosition): TypedNamelessTerm() {
 		override fun toString(): String = "unfold[$type] $term"
 	}
 }

@@ -1,5 +1,7 @@
 package de.earley.simplyTyped.terms
 
+import de.earley.parser.SourcePosition
+
 data class CasePattern(
 	val slot: String,
 	val variableName: VariableName,
@@ -7,7 +9,7 @@ data class CasePattern(
 )
 
 fun CasePattern.freeVariables(): Set<TypedTerm.Variable> =
-	term.freeVariables() - TypedTerm.Variable(variableName)
+	term.freeVariables().filter { it.name != this.variableName }.toSet()
 
 data class NamelessCasePattern(
 	val slot: String,

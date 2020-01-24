@@ -9,22 +9,22 @@ import de.earley.simplyTyped.types.Type
 object TypeDefGrammar {
 
 	private val recTypeDef: P<TypedTerm> = context("rec type def") {
-		isA(RecTypeDef).void() +
+		isA(RecTypeDef).src +
 		isA(Identifier).string +
 		isA(Equals).void() +
 		TypeGrammar.type +
 		isA(In).void() +
 		TermGrammar.term
-	}.map { name, type, body -> TypedTerm.TypeDef(name, Type.RecursiveType(name, type), body) }
+	}.map { src, name, type, body -> TypedTerm.TypeDef(name, Type.RecursiveType(name, type), body, src) }
 
 	private val simpleTypeDef: P<TypedTerm> = context("type def") {
-		isA(TypeDef).void() +
+		isA(TypeDef).src +
 		isA(Identifier).string +
 		isA(Equals).void() +
 		TypeGrammar.type +
 		isA(In).void() +
 		TermGrammar.term
-	}.map(TypedTerm::TypeDef)
+	}.map { src, name, type, body -> TypedTerm.TypeDef(name, type, body, src) }
 
 	val typeDef: P<TypedTerm> = simpleTypeDef or recTypeDef
 

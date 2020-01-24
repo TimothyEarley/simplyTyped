@@ -10,18 +10,18 @@ import de.earley.simplyTyped.terms.fix
 object LetBindingGrammar {
 	private val letBinding: P<TypedTerm.LetBinding> = context("let binding") {
 		(
-				isA(Let).void() +
+				isA(Let).src +
 				isA(Identifier).string +
 				isA(Equals).void() +
 				TermGrammar.term +
 				isA(In).void() +
 				TermGrammar.term
-		).map(TypedTerm::LetBinding)
+		).map { src, binder, bound, expression -> TypedTerm.LetBinding(binder, bound, expression, src)}
 	}
 
 	private val letrecBinding: P<TypedTerm.LetBinding> = context("letrec binding") {
 		(
-				isA(LetRec).void() +
+				isA(LetRec).src +
 				isA(Identifier).string +
 				isA(Colon).void() +
 				TypeGrammar.type +
@@ -29,10 +29,10 @@ object LetBindingGrammar {
 				TermGrammar.term +
 				isA(In).void() +
 				TermGrammar.term
-		).map { x, type, bound, expression ->
+		).map { src, x, type, bound, expression ->
 			// syntax desugaring
 			// letrec x : T = t1 in t2 => let x = fix (λx : T.t1) in t2
-			TypedTerm.LetBinding(x, fix(x, type, bound), expression)
+			TypedTerm.LetBinding(x, fix(x, type, bound), expression, src)
 
 		}
 	}

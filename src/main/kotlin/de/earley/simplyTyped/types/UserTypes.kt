@@ -8,21 +8,21 @@ fun resolveUserTypes(term: TypedNamelessTerm): TypedNamelessTerm = term.resolveU
 
 private fun TypedNamelessTerm.resolveUserTypes(userTypes: Map<TypeName, Type>): TypedNamelessTerm = when (this) {
 	is Variable -> this
-	is Abstraction -> Abstraction(argType.resolve(userTypes, this), body.resolveUserTypes(userTypes))
-	is App -> App(left.resolveUserTypes(userTypes), right.resolveUserTypes(userTypes))
+	is Abstraction -> Abstraction(argType.resolve(userTypes, this), body.resolveUserTypes(userTypes), src)
+	is App -> App(left.resolveUserTypes(userTypes), right.resolveUserTypes(userTypes), src)
 	is KeywordTerm -> this
-	is LetBinding -> LetBinding(bound.resolveUserTypes(userTypes), expression.resolveUserTypes(userTypes))
-	is Record -> Record(contents.mapValues { it.value.resolveUserTypes(userTypes) })
-	is RecordProjection -> RecordProjection(record.resolveUserTypes(userTypes), project)
-	is IfThenElse -> IfThenElse(condition.resolveUserTypes(userTypes), then.resolveUserTypes(userTypes), `else`.resolveUserTypes(userTypes))
-	is Fix -> Fix(func.resolveUserTypes(userTypes))
-	TypedNamelessTerm.Unit -> this
+	is LetBinding -> LetBinding(bound.resolveUserTypes(userTypes), expression.resolveUserTypes(userTypes), src)
+	is Record -> Record(contents.mapValues { it.value.resolveUserTypes(userTypes) }, src)
+	is RecordProjection -> RecordProjection(record.resolveUserTypes(userTypes), project, src)
+	is IfThenElse -> IfThenElse(condition.resolveUserTypes(userTypes), then.resolveUserTypes(userTypes), `else`.resolveUserTypes(userTypes), src)
+	is Fix -> Fix(func.resolveUserTypes(userTypes), src)
+	is TypedNamelessTerm.Unit -> this
 	is TypeDef -> body.resolveUserTypes(userTypes + (name to type.resolve(userTypes, this)))
-	is Variant -> Variant(slot, term.resolveUserTypes(userTypes), type.resolve(userTypes, this))
-	is Case -> Case(on.resolveUserTypes(userTypes), cases.map { NamelessCasePattern(it.slot, it.term.resolveUserTypes(userTypes)) })
-	is Assign -> Assign(variable.resolveUserTypes(userTypes), term.resolveUserTypes(userTypes))
-	is Read -> Read(variable.resolveUserTypes(userTypes))
-	is Ref -> Ref(term.resolveUserTypes(userTypes))
+	is Variant -> Variant(slot, term.resolveUserTypes(userTypes), type.resolve(userTypes, this), src)
+	is Case -> Case(on.resolveUserTypes(userTypes), cases.map { NamelessCasePattern(it.slot, it.term.resolveUserTypes(userTypes)) }, src)
+	is Assign -> Assign(variable.resolveUserTypes(userTypes), term.resolveUserTypes(userTypes), src)
+	is Read -> Read(variable.resolveUserTypes(userTypes), src)
+	is Ref -> Ref(term.resolveUserTypes(userTypes), src)
 	is Fold -> TODO()
 	is Unfold -> TODO()
 }

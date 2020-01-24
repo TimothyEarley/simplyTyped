@@ -84,7 +84,7 @@ private fun EvalState.evalStep(): EvalState = with(expr) {
 			copy(contents = newContents).mem(step.memory)
 		}
 		is RecordProjection -> when {
-			record !is Record -> error("projecting on a non record")
+			record !is Record -> error("projecting on a non record $record")
 			/*E-ProjRcd*/ record.isValue() -> record.contents[project]?.mem(memory)
 				?: error("Attempted to project unknown label $project out of record $record")
 			/*E-Proj*/ else -> record.mem(memory).evalStep().let {
@@ -114,7 +114,7 @@ private fun EvalState.evalStep(): EvalState = with(expr) {
 		is Case -> when {
 			on !is Variant -> error("attempted case on a non variant: $this")
 			/*E-CaseVariant*/ on.isValue() -> (cases.find { it.slot == this.on.slot }
-				?: error("case does not match!")).term.sub(0, on).mem(memory)
+				?: error("case does not match!")).term.sub(0, on.term).mem(memory)
 			/*E-Case*/ else -> on.mem(memory).evalStep().let {
 				copy(on = it.expr).mem(it.memory)
 			}

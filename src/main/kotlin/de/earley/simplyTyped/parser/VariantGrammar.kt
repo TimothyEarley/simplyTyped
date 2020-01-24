@@ -9,14 +9,14 @@ import de.earley.simplyTyped.terms.TypedTerm
 object VariantGrammar {
 
 	private val variant: P<TypedTerm> = context("variant") {
-		isA(OpenAngle).void() +
+		isA(OpenAngle).src +
 		isA(Identifier).string +
 		isA(Equals).void() +
 		TermGrammar.term +
 		isA(ClosedAngle).void() +
 		isAMatch(Identifier, "as").void() +
 		TypeGrammar.type
-	}.map(TypedTerm::Variant)
+	}.map { src, slot, term, type -> TypedTerm.Variant(slot, term, type, src) }
 
 	private val pattern = context("pattern") {
 		isA(OpenAngle).void() +
@@ -29,11 +29,11 @@ object VariantGrammar {
 	}.map(::CasePattern)
 
 	private val case: P<TypedTerm> = context("case of") {
-		isA(Case).void() +
+		isA(Case).src +
 		TermGrammar.safeTerm + // safe term b.c. of is not a keyword
 		isAMatch(Identifier, "of").void() +
 		many(pattern, isA(Pipe))
-	}.map(TypedTerm::Case)
+	}.map { src, on, cases -> TypedTerm.Case(on, cases, src) }
 
 	val variants = variant or case
 

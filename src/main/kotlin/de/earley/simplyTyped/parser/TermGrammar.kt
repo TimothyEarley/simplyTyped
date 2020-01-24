@@ -2,6 +2,7 @@ package de.earley.simplyTyped.parser
 
 import de.earley.parser.combinators.*
 import de.earley.parser.context
+import de.earley.parser.src
 import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 
@@ -10,22 +11,22 @@ object TermGrammar {
 
 	private val variable: P<TypedTerm.Variable> =
 		context("var") {
-			isA(Identifier).string.map(TypedTerm::Variable)
+			isA(Identifier).map { it.value to it.src() }.map(TypedTerm::Variable)
 		}
 
 	private val abstraction: P<TypedTerm.Abstraction> =
 		context("abs") {
 			(
-					isA(Lambda).void() +
+					isA(Lambda).src +
 							isA(Identifier).string +
 							isA(Colon).void() +
 							TypeGrammar.type +
 							isA(Dot).void() +
 							term
-					).map(TypedTerm::Abstraction)
+					).map { src, binder, argType, body -> TypedTerm.Abstraction(binder, argType, body, src) }
 		}
 	private val app: P<TypedTerm.App> = context("app") {
-		(safeTerm + safeTerm).map(TypedTerm::App)
+		(safeTerm + safeTerm).map { left, right -> TypedTerm.App(left, right, left.src) }
 	}
 
 	private val parenTerm: P<TypedTerm> = context("paren") {

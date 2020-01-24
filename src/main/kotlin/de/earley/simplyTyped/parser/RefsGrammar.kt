@@ -9,16 +9,16 @@ import de.earley.simplyTyped.terms.TypedTerm
 object RefsGrammar {
 
 	private val ref : P<TypedTerm> = context("ref") {
-		isA(Ref).void() + TermGrammar.safeTerm
-	}.map(TypedTerm::Ref)
+		isA(Ref).src + TermGrammar.safeTerm
+	}.map { src, term -> TypedTerm.Ref(term, src) }
 
 	private val assign : P<TypedTerm.Assign> = context("assign") {
-		TermGrammar.safeTerm + isA(Colon).void() + isA(Equals).void() + TermGrammar.term
-	}.map(TypedTerm::Assign)
+		TermGrammar.safeTerm + isA(Colon).src + isA(Equals).void() + TermGrammar.term
+	}.map { variable, src, term  -> TypedTerm.Assign(variable, term, src) }
 
 	private val read: P<TypedTerm.Read> = context("read") {
-		isA(Exclamation).void() + TermGrammar.safeTerm
-	}.map(TypedTerm::Read)
+		isA(Exclamation).src + TermGrammar.safeTerm
+	}.map { src, variable -> TypedTerm.Read(variable, src) }
 
 	val refs: P<TypedTerm> = assign or read or ref
 

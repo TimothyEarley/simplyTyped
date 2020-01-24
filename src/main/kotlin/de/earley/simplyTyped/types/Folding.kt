@@ -1,5 +1,6 @@
 package de.earley.simplyTyped.types
 
+import de.earley.parser.SourcePosition
 import de.earley.simplyTyped.terms.NamelessCasePattern
 import de.earley.simplyTyped.terms.TypedNamelessTerm
 import de.earley.simplyTyped.terms.TypedNamelessTerm.*
@@ -7,27 +8,27 @@ import de.earley.simplyTyped.terms.TypedNamelessTerm.*
 fun addFolding(namelessTerm: TypedNamelessTerm): TypedNamelessTerm = with(namelessTerm) {
 	when (this) {
 		is Variable -> this
-		is Abstraction -> Abstraction(argType, addFolding(body))
-		is App -> App(addFolding(left), addFolding(right))
+		is Abstraction -> Abstraction(argType, addFolding(body), src)
+		is App -> App(addFolding(left), addFolding(right), src)
 		is KeywordTerm -> this
-		is LetBinding -> LetBinding(addFolding(bound), addFolding(expression))
-		is Record -> Record(contents.mapValues { addFolding(it.value) })
-		is RecordProjection -> RecordProjection(addFolding(record), project)
-		is IfThenElse -> IfThenElse(addFolding(condition), addFolding(then), addFolding(`else`))
-		is Fix -> Fix(addFolding(func)) //TODO add folding
-		TypedNamelessTerm.Unit -> TypedNamelessTerm.Unit
-		is TypeDef -> TypeDef(name, type, addFolding(body))
+		is LetBinding -> LetBinding(addFolding(bound), addFolding(expression), src)
+		is Record -> Record(contents.mapValues { addFolding(it.value) }, src)
+		is RecordProjection -> RecordProjection(addFolding(record), project, src)
+		is IfThenElse -> IfThenElse(addFolding(condition), addFolding(then), addFolding(`else`), src)
+		is Fix -> Fix(addFolding(func), src) //TODO add folding
+		is TypedNamelessTerm.Unit -> TypedNamelessTerm.Unit(src)
+		is TypeDef -> TypeDef(name, type, addFolding(body), src)
 		is Variant ->
-			if (type is Type.RecursiveType) Fold(type, Variant(slot, addFolding(term), type.unfold()))
-			else Variant(slot, addFolding(term), type)
+			if (type is Type.RecursiveType) Fold(type, Variant(slot, addFolding(term), type.unfold(), src), SourcePosition.Synth)
+			else Variant(slot, addFolding(term), type, src)
 		is Case -> {
-			Unfold(null, Case(addFolding(on), cases.map { NamelessCasePattern(it.slot, addFolding(it.term)) }))
+			Unfold(null, Case(addFolding(on), cases.map { NamelessCasePattern(it.slot, addFolding(it.term)) }, src), SourcePosition.Synth)
 		}
-		is Assign -> Assign(addFolding(variable), addFolding(term))
-		is Read -> Read(addFolding(variable))
-		is Ref -> Ref(addFolding(term))
-		is Fold -> Fold(type, addFolding(term))
-		is Unfold -> Unfold(type, addFolding(term))
+		is Assign -> Assign(addFolding(variable), addFolding(term), src)
+		is Read -> Read(addFolding(variable), src)
+		is Ref -> Ref(addFolding(term), src)
+		is Fold -> Fold(type, addFolding(term), src)
+		is Unfold -> Unfold(type, addFolding(term), src)
 	}
 }
 

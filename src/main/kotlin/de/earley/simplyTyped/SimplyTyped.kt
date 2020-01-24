@@ -27,9 +27,9 @@ fun main() {
 		::eval +
 		::log
 
-	process("/counter.tl")
-	process("/source.tl")
 	process("/list.tl")
+//	process("/source.tl")
+//	process("/counter.tl")
 
 }
 
@@ -49,7 +49,7 @@ fun checkFreeVariables(parsed: TypedTerm): TypedTerm {
 
 fun typeCheck(parsed: TypedNamelessTerm): TypedNamelessTerm {
 	val type = parsed.type().recover {
-		System.err.println("Typing error: ${it.msg} \nin ${it.element}")
+		System.err.println("Typing error: ${it.msg} \nin ${it.element} \nat ${it.element.src}")
 		exitProcess(1)
 	}
 	println("$parsed : $type")
