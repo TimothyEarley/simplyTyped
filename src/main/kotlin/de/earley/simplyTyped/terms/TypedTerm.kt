@@ -136,8 +136,3 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is Read -> variable.freeVariables()
 	is Ref -> term.freeVariables()
 }
-
-// use erasure
-fun TypedTerm.eval() = toNameless(emptyMap())
-	.toUntyped()
-	.eval()

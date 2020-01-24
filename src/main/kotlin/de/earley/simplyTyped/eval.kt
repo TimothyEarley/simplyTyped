@@ -6,10 +6,9 @@ import de.earley.simplyTyped.terms.UntypedNamelessTerm
 import de.earley.simplyTyped.terms.UntypedNamelessTerm.*
 import kotlin.contracts.contract
 
-fun UntypedNamelessTerm.eval(): UntypedNamelessTerm {
-	var current = this.mem(emptyList())
+fun eval(term: UntypedNamelessTerm): UntypedNamelessTerm {
+	var current = term.mem(emptyList())
 	while(! current.expr.isValue()) {
-		println(current) //TODO debug switch
 		current = current.evalStep()
 		//TODO GC
 	}
