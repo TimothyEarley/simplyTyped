@@ -3,41 +3,35 @@ package de.earley.simplyTyped.types
 import de.earley.simplyTyped.terms.*
 import de.earley.simplyTyped.types.Type.*
 import de.earley.simplyTyped.types.TypingResult.*
-import kotlin.Error
 
 
-fun TypedTerm.type(): TypingResult<Type> = toNameless(emptyMap()).type(emptyMap(), emptyMap())
+fun TypedNamelessTerm.type(): TypingResult<Type> = type(emptyMap())
 
 private typealias TypeEnvironment = Map<Int, Type>
 private fun TypeEnvironment.inc(): TypeEnvironment = this.mapKeys { (k, _) -> k + 1 }
 private operator fun TypeEnvironment.plus(type: Type): TypeEnvironment = this.inc() + (0 to type)
 
 private fun TypedNamelessTerm.type(
-	variableTypes: TypeEnvironment,
-	userTypes: Map<TypeName, Type>
+	variableTypes: TypeEnvironment
 ): TypingResult<Type> = when (this) {
 	is TypedNamelessTerm.Variable -> /*T-Var*/ {
 		val type = variableTypes[this.number]
-		type?.resolveUserType(userTypes, this)
-			?: Error("Variable $number not found in the type env $variableTypes", this)
+		require(type !is UserType) { "User types should be removed before type checking" }
+		type?.let { Ok(it) } ?: Error("Variable $number not found in the type env $variableTypes", this)
 	}
 	is TypedNamelessTerm.Abstraction -> /*T-Abs*/ {
-		argType.resolveUserType(userTypes, this).flatMap { arg ->
-			body.type(variableTypes + arg, userTypes)
-				.map { t2 -> FunctionType(arg, t2) }
-		}
+		body.type(variableTypes + argType)
+			.map { t2 -> FunctionType(argType, t2) }
 	}
 	is TypedNamelessTerm.App -> {
 		/*AT-App*/
-		left.type(variableTypes, userTypes).flatMap { f ->
+		left.type(variableTypes).flatMap { f ->
 			if (f !is FunctionType) Error("Trying to call non-function $f", this)
-			else f.from.resolveUserType(userTypes, this).flatMap { fromType ->
-				right.type(variableTypes, userTypes).flatMap { arg ->
-					if (arg.isSubtype(fromType)) Ok(f.to) else Error(
-						"App mismatch: Function is $f, argument is $arg",
-						this
-					)
-				}
+			else right.type(variableTypes).flatMap { arg ->
+				if (arg.isSubtype(f.from)) Ok(f.to) else Error(
+					"App mismatch: Function is $f, argument is $arg",
+					this
+				)
 			}
 		}
 	}
@@ -51,20 +45,20 @@ private fun TypedNamelessTerm.type(
 	}
 	is TypedNamelessTerm.LetBinding -> {
 		/*T-Let*/
-		bound.type(variableTypes, userTypes)
+		bound.type(variableTypes)
 			.flatMap { t1 ->
-				expression.type(variableTypes + t1, userTypes)
+				expression.type(variableTypes + t1)
 			}
 	}
 	is TypedNamelessTerm.Record -> {
-			contents.mapValues { it.value.type(variableTypes, userTypes) }
+			contents.mapValues { it.value.type(variableTypes) }
 				.sequence()
 				.map { types ->
 					RecordType(types)
 				}
 		}
 	is TypedNamelessTerm.RecordProjection -> {
-		record.type(variableTypes, userTypes)
+		record.type(variableTypes)
 			.flatMap { recordType ->
 				if (recordType !is RecordType) Error("projection on a non record type", this)
 				else if (! recordType.types.containsKey(project)) Error("projection label not in record", this)
@@ -74,10 +68,10 @@ private fun TypedNamelessTerm.type(
 	}
 	is TypedNamelessTerm.IfThenElse -> {
 		/*T-If*/
-		condition.type(variableTypes, userTypes).flatMap { conditionType ->
+		condition.type(variableTypes).flatMap { conditionType ->
 			if (conditionType != Bool) Error("condition is not a boolean but a $conditionType", this)
-			else then.type(variableTypes, userTypes).flatMap { thenType ->
-				`else`.type(variableTypes, userTypes).flatMap { elseType ->
+			else then.type(variableTypes).flatMap { thenType ->
+				`else`.type(variableTypes).flatMap { elseType ->
 					if (thenType == elseType) Ok(thenType)
 					else Error("then and else differ: $thenType != $elseType", this)
 				}
@@ -85,44 +79,43 @@ private fun TypedNamelessTerm.type(
 		}
 	}
 	is TypedNamelessTerm.Fix -> {
-		func.type(variableTypes, userTypes)
-			.flatMap { funcType ->
-				if (funcType !is FunctionType) Error("can only fix on functions, not on $funcType", this)
-				else funcType.from.resolveUserType(userTypes, this).flatMap {  fromType ->
-					funcType.to.resolveUserType(userTypes, this).flatMap { toType ->
-						if (fromType == toType) Ok(funcType.from)
-						else Error("Fix cannot be applied to $fromType -> $toType", this)
-					}
-				}
-			}
-
-	}
-	is TypedNamelessTerm.Unit -> Ok(Type.Unit)
-	is TypedNamelessTerm.TypeDef -> body.type(variableTypes, userTypes + (name to type))
-	is TypedNamelessTerm.Variant -> term.type(variableTypes, userTypes).flatMap { termType ->
-		type.resolveUserType(userTypes, this).flatMap { actualType ->
+		func.type(variableTypes).flatMap { funcType ->
 			when {
-				actualType !is Variant -> Error("variants must be variant type, not $actualType.", this)
-				!actualType.variants.containsKey(slot) -> Error(
-					"variant has type $actualType, but the key $actualType is not found.",
-					this
-				)
-				actualType.variants.getValue(slot) == termType -> Error(
-					"type $termType does not match variant type ${actualType.variants.getValue(slot)}",
-					this
-				)
-				else -> Ok(actualType)
+				funcType !is FunctionType ->
+					Error("can only fix on functions, not on $funcType", this)
+
+				funcType.from == funcType.to ->
+					Ok(funcType.from)
+
+				else ->
+					Error("Fix cannot be applied to ${funcType.from} -> ${funcType.to}", this)
 			}
 		}
 	}
-	is TypedNamelessTerm.Case -> on.type(variableTypes, userTypes).flatMap { onType ->
+	is TypedNamelessTerm.Unit -> Ok(Type.Unit)
+	is TypedNamelessTerm.TypeDef -> body.type(variableTypes)
+	is TypedNamelessTerm.Variant -> term.type(variableTypes).flatMap { termType ->
+		when {
+			type !is Variant -> Error("variants must be variant type, not $type.", this)
+			!type.variants.containsKey(slot) -> Error(
+				"variant has type $type, but the key $slot is not found.",
+				this
+			)
+			type.variants.getValue(slot) != termType -> Error(
+				"type $termType does not match variant type ${type.variants.getValue(slot)}",
+				this
+			)
+			else -> Ok(type)
+		}
+	}
+	is TypedNamelessTerm.Case -> on.type(variableTypes).flatMap { onType ->
 		if (onType !is Variant) Error("Can only do case of on variant type, not $onType", this)
 		else {
 			cases.map {
 				val slotType = onType.variants[it.slot]
 				if (slotType == null) Error("pattern in case is wrong!", this)
 				else {
-					it.term.type(variableTypes + slotType, userTypes)
+					it.term.type(variableTypes + slotType)
 				}
 			}.sequence().flatMap { patternTypes ->
 				val firstType = patternTypes.first()
@@ -131,41 +124,18 @@ private fun TypedNamelessTerm.type(
 			}
 		}
 	}
-	is TypedNamelessTerm.Assign -> /*T-Assign*/variable.type(variableTypes, userTypes).flatMap {  varType ->
+	is TypedNamelessTerm.Assign -> /*T-Assign*/variable.type(variableTypes).flatMap { varType ->
 		if (varType !is Ref) Error("Cannot assign to non ref type $varType", this)
-		else term.type(variableTypes, userTypes).flatMap {  termType ->
+		else term.type(variableTypes).flatMap { termType ->
 			if (termType != varType.of) Error("Incompatible types in assign: ${varType.of} := $termType", this)
 			else Ok(Type.Unit)
 		}
 	}
-	is TypedNamelessTerm.Read -> variable.type(variableTypes, userTypes).flatMap {
+	is TypedNamelessTerm.Read -> variable.type(variableTypes).flatMap {
 		if (it is Ref) Ok(it.of)
 		else Error("Cannot dereference a non Ref type: $it", this)
 	}
-	is TypedNamelessTerm.Ref -> term.type(variableTypes, userTypes).map {
+	is TypedNamelessTerm.Ref -> term.type(variableTypes).map {
 		/*T-Ref*/ Type.Ref(it)
-	}
-}
-
-private fun Type.resolveUserType(userTypes: Map<TypeName, Type>, context: TypedNamelessTerm): TypingResult<Type> = when (this) {
-	is UserType -> {
-		//TODO at the moment we only have type aliases
-		//TODO recursive
-		val actualType = userTypes[this.name]
-		if (actualType == null) Error("Unknown type $this.", context)
-		else Ok(actualType)
-	}
-	is FunctionType -> from.resolveUserType(userTypes, context).flatMap { fromType ->
-		to.resolveUserType(userTypes, context).map {  toType ->
-			FunctionType(fromType, toType)
-		}
-	}
-	is RecordType -> types.mapValues { it.value.resolveUserType(userTypes, context) }.sequence().map {
-		RecordType(it)
-	}
-	Nat, Bool, Type.Unit, Top -> Ok(this)
-	is Ref -> of.resolveUserType(userTypes, context).map { Ref(it) }
-	is Variant -> variants.mapValues { it.value.resolveUserType(userTypes, context) }.sequence().map {
-		Variant(it)
 	}
 }

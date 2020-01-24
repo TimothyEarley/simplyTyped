@@ -11,6 +11,7 @@ fun eval(term: UntypedNamelessTerm): UntypedNamelessTerm {
 	while(! current.expr.isValue()) {
 		current = current.evalStep()
 		//TODO GC
+		println(current)
 	}
 	return current.expr.queryMemory(current.memory)
 }
@@ -107,7 +108,7 @@ private fun EvalState.evalStep(): EvalState = with(expr) {
 			else -> error("cannot apply fix to $func")
 		}
 		is Variant -> {
-			/*E-Variant*/ term.mem(memory).let {
+			/*E-Variant*/ term.mem(memory).evalStep().let {
 				copy(term = it.expr).mem(it.memory)
 			}
 		}

@@ -6,6 +6,7 @@ import de.earley.simplyTyped.parser.SimplyTypedLambdaToken
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 import de.earley.simplyTyped.terms.*
 import de.earley.simplyTyped.types.recover
+import de.earley.simplyTyped.types.resolveUserTypes
 import de.earley.simplyTyped.types.type
 import kotlin.system.exitProcess
 
@@ -17,11 +18,14 @@ fun main() {
 		::lexer +
 		::parser +
 		::checkFreeVariables +
+		::unname +
+		// TODO rewrite recursive types
+		::resolveUserTypes +
 		::typeCheck +
-		::compile +
+		::removeTypes +
 		::eval +
 		::println
-	process("/refs.tl")
+	process("/list.tl")
 
 }
 
@@ -39,7 +43,7 @@ fun checkFreeVariables(parsed: TypedTerm): TypedTerm {
 	return parsed
 }
 
-fun typeCheck(parsed: TypedTerm): TypedTerm {
+fun typeCheck(parsed: TypedNamelessTerm): TypedNamelessTerm {
 	val type = parsed.type().recover {
 		println("Typing error: ${it.msg} \nin ${it.element}")
 		exitProcess(1)
@@ -49,9 +53,9 @@ fun typeCheck(parsed: TypedTerm): TypedTerm {
 	return parsed
 }
 
-fun compile(parsed: TypedTerm): UntypedNamelessTerm =
-	parsed.toNameless(emptyMap()).toUntyped()
+fun removeTypes(parsed: TypedNamelessTerm): UntypedNamelessTerm = parsed.toUntyped()
 
+fun unname(named: TypedTerm): TypedNamelessTerm = named.toNameless(emptyMap())
 
 operator fun <A, B, C> ((A) -> B).plus(other: (B) -> C): (A) -> C = {
 	other(this(it))
