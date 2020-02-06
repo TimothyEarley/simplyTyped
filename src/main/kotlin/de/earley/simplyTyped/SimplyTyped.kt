@@ -21,7 +21,7 @@ fun main() {
 		::checkFreeVariables +
 		::unname +
 		::resolveUserTypes +
-		::addFolding +
+//		::addFolding +
 		::typeCheck +
 		::removeTypes +
 		::eval +
@@ -49,7 +49,7 @@ fun checkFreeVariables(parsed: TypedTerm): TypedTerm {
 
 fun typeCheck(parsed: TypedNamelessTerm): TypedNamelessTerm {
 	val type = parsed.type().recover {
-		System.err.println("Typing error: ${it.msg} \nin ${it.element} \nat ${it.element.src}")
+		System.err.println("Typing error: ${it.msg} \nat: ${it.element} \nat ${it.element.src}")
 		exitProcess(1)
 	}
 	println("$parsed : $type")

@@ -17,7 +17,7 @@ private fun TypedNamelessTerm.type(
 	is TypedNamelessTerm.Variable -> /*T-Var*/ {
 		val type = variableTypes[this.number]
 		require(type !is UserType) { "User types should be removed before type checking" }
-		type?.let { Ok(it) } ?: Error("Variable $number not found in the type env $variableTypes", this)
+		type?.let { Ok(it.tryUnfold()) } ?: Error("Variable $number not found in the type env $variableTypes", this)
 	}
 	is TypedNamelessTerm.Abstraction -> /*T-Abs*/ {
 		body.type(variableTypes + argType)
@@ -84,7 +84,7 @@ private fun TypedNamelessTerm.type(
 				funcType !is FunctionType ->
 					Error("can only fix on functions, not on $funcType", this)
 
-				funcType.from == funcType.to ->
+				funcType.from sameTypeAs funcType.to ->
 					Ok(funcType.from)
 
 				else ->
@@ -95,17 +95,18 @@ private fun TypedNamelessTerm.type(
 	is TypedNamelessTerm.Unit -> Ok(Type.Unit)
 	is TypedNamelessTerm.TypeDef -> body.type(variableTypes)
 	is TypedNamelessTerm.Variant -> term.type(variableTypes).flatMap { termType ->
+		val actualType = type.tryUnfold()
 		when {
-			type !is Variant -> Error("variants must be variant type, not $type.", this)
-			!type.variants.containsKey(slot) -> Error(
-				"variant has type $type, but the key $slot is not found.",
+			actualType !is Variant -> Error("variants must be variant type, not $actualType.", this)
+			!actualType.variants.containsKey(slot) -> Error(
+				"variant has type $actualType, but the key $slot is not found.",
 				this
 			)
-			type.variants.getValue(slot) != termType -> Error(
-				"type $termType does not match variant type ${type.variants.getValue(slot)}",
+			actualType.variants.getValue(slot) notSameTypeAs termType -> Error(
+				"type $termType does not match variant type ${actualType.variants.getValue(slot)}",
 				this
 			)
-			else -> Ok(type)
+			else -> Ok(actualType)
 		}
 	}
 	is TypedNamelessTerm.Case -> on.type(variableTypes).flatMap { onType ->
@@ -119,7 +120,7 @@ private fun TypedNamelessTerm.type(
 				}
 			}.sequence().flatMap { patternTypes ->
 				val firstType = patternTypes.first()
-				if (patternTypes.all { it == firstType }) Ok(firstType)
+				if (patternTypes.all { it sameTypeAs firstType }) Ok(firstType)
 				else Error("cases do not have the same type: $patternTypes", this)
 			}
 		}
@@ -155,5 +156,13 @@ private fun TypedNamelessTerm.type(
 			})
 		}
 		else -> Error("Can only unfold on recursive types", this)
+	}
+}
+
+private fun Type.tryUnfold(): Type {
+	return if (this is RecursiveType) {
+		this.unfold()
+	} else {
+		this
 	}
 }

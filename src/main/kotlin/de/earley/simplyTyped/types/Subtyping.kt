@@ -9,5 +9,16 @@ infix fun Type.isSubtype(bigger: Type): Boolean = when {
 		bigger.types.all { (slot, type) ->
 			this.types.containsKey(slot) && this.types.getValue(slot) isSubtype type
 		}
+	this is Type.RecursiveType || bigger is Type.RecursiveType -> {
+		when {
+			this is Type.RecursiveType && bigger !is Type.RecursiveType -> this.unfold() isSubtype bigger
+			this !is Type.RecursiveType && bigger is Type.RecursiveType -> this isSubtype bigger.unfold()
+			this is Type.RecursiveType && bigger is Type.RecursiveType -> this.body isSubtype bigger.body
+			else -> error("impossible")
+		}
+	}
 	else -> false
 }
+
+infix fun Type.sameTypeAs(other: Type) = this == other || (this isSubtype other && other isSubtype this)
+infix fun Type.notSameTypeAs(other: Type) = !(this sameTypeAs other)
