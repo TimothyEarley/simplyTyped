@@ -5,10 +5,7 @@ import de.earley.simplyTyped.parser.SimplyTypedGrammar
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 import de.earley.simplyTyped.terms.*
-import de.earley.simplyTyped.types.addFolding
-import de.earley.simplyTyped.types.recover
-import de.earley.simplyTyped.types.resolveUserTypes
-import de.earley.simplyTyped.types.type
+import de.earley.simplyTyped.types.*
 import kotlin.system.exitProcess
 
 @ExperimentalStdlibApi
@@ -22,13 +19,14 @@ fun main() {
 		::unname +
 		::resolveUserTypes +
 //		::addFolding +
+		::constraintType +
 		::typeCheck +
 		::removeTypes +
 		::eval +
 		::log
 
-	process("/list.tl")
-//	process("/source.tl")
+//	process("/list.tl")
+	process("/source.tl")
 //	process("/counter.tl")
 
 }

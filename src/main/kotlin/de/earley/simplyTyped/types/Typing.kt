@@ -7,9 +7,9 @@ import de.earley.simplyTyped.types.TypingResult.*
 
 fun TypedNamelessTerm.type(): TypingResult<Type> = type(emptyMap())
 
-private typealias TypeEnvironment = Map<Int, Type>
-private fun TypeEnvironment.inc(): TypeEnvironment = this.mapKeys { (k, _) -> k + 1 }
-private operator fun TypeEnvironment.plus(type: Type): TypeEnvironment = this.inc() + (0 to type)
+typealias TypeEnvironment = Map<Int, Type>
+fun TypeEnvironment.inc(): TypeEnvironment = this.mapKeys { (k, _) -> k + 1 }
+operator fun TypeEnvironment.plus(type: Type): TypeEnvironment = this.inc() + (0 to type)
 
 private fun TypedNamelessTerm.type(
 	variableTypes: TypeEnvironment
