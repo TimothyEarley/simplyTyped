@@ -25,8 +25,9 @@ fun main() {
 		::eval +
 		::log
 
+	process("/constrain.tl")
 //	process("/list.tl")
-	process("/source.tl")
+//	process("/source.tl")
 //	process("/counter.tl")
 
 }

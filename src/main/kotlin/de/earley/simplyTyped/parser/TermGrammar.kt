@@ -41,7 +41,7 @@ object TermGrammar {
 		UnitParser.unit or
 		LetBindingGrammar.binding or
 		TypeDefGrammar.typeDef or
-		VariantGrammar.variants or
+		VariantGrammar.variants or InferTypeGrammar.inferVariant or
 		RecordGrammar.record or
 		ArithmeticGrammar.arithmeticExpression or
 		RefsGrammar.refs or //TODO refs with sequence needs brackets. This is not nice
@@ -54,7 +54,7 @@ object TermGrammar {
 		SequenceGrammar.sequence or
 		RecordGrammar.projection or
 		safeTerm or
-		abstraction
+		abstraction or InferTypeGrammar.inferTypeAbs
 	}
 
 }

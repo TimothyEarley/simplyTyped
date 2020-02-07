@@ -57,5 +57,6 @@ private fun Type.resolveUserType(userTypes: Map<TypeName, Type>, context: TypedN
 			Type.RecursiveType(binder, it)
 		}
 	}
-	is Type.TypeVariable -> TODO()
+	//TODO this is an error in some cases, but not when using them for type inference
+	is Type.TypeVariable -> TypingResult.Ok(this)
 }
