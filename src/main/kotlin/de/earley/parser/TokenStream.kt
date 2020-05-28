@@ -1,6 +1,6 @@
 package de.earley.parser
 
-// This is just because it cool to hae lexing and parsing concurrently
+// This is just because it cool to have lexing and parsing concurrently
 
 interface TokenStream<T:TokenType> {
 	val head: Token<T>?
@@ -12,8 +12,8 @@ private class IteratorTokenStream<T:TokenType> (
 	private val index: Int,
 	private val cache: MutableList<Token<T>>
 ) : TokenStream<T> {
-	override val head: Token<T>? by kotlin.lazy { get(index) }
-	override val tail: TokenStream<T> by kotlin.lazy {
+	override val head: Token<T>? by lazy { get(index) }
+	override val tail: TokenStream<T> by lazy {
 		IteratorTokenStream(iterator, index + 1, cache)
 	}
 
@@ -36,8 +36,16 @@ fun <T : TokenType> Sequence<Token<T>>.toTokenStream(): TokenStream<T> = Iterato
 	mutableListOf()
 )
 
+fun <T : TokenType> TokenStream<T>.toSequence(): Sequence<Token<T>> = sequence {
+	var current : TokenStream<T> = this@toSequence
+	while (current.head != null) {
+		yield(current.head!!)
+		current = current.tail
+	}
+}
+
 fun <T : TokenType> TokenStream<T>.filter(p: (Token<T>) -> Boolean): TokenStream<T> = object : TokenStream<T> {
-	private val headTail: Pair<Token<T>?, TokenStream<T>> by kotlin.lazy {
+	private val headTail: Pair<Token<T>?, TokenStream<T>> by lazy {
 		val originalHead = this@filter.head
 		when {
 			originalHead == null -> null to this@filter.tail
@@ -49,8 +57,8 @@ fun <T : TokenType> TokenStream<T>.filter(p: (Token<T>) -> Boolean): TokenStream
 		}
 	}
 
-	override val head: Token<T>? by kotlin.lazy { headTail.first	}
-	override val tail: TokenStream<T> by kotlin.lazy { headTail.second	}
+	override val head: Token<T>? by lazy { headTail.first	}
+	override val tail: TokenStream<T> by lazy { headTail.second	}
 }
 
 // for debug

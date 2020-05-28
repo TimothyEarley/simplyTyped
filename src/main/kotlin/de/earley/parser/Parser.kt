@@ -105,7 +105,7 @@ private fun <Type : TokenType> isDifferentContextOfDepth(chain: List<Parser<Type
 
 //TODO make writer pure?
 fun <Type: TokenType, R> Parser<Type, R>.run(tokens: TokenStream<Type>, debug: Boolean = false): ParserResult<Type, R>
-		= run(tokens, if (debug) { fun(s:() -> String) = println(s()) } else {{}})
+		= this.run(tokens, if (debug) { fun(s:() -> String) = println(s()) } else {{}})
 
 private fun <Type: TokenType, R> Parser<Type, R>.run(tokens: TokenStream<Type>, writer: Writer = {}): ParserResult<Type, R>
 		= this.applyRule(ParserState.of(tokens, writer))

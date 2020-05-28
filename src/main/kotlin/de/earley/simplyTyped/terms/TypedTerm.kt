@@ -139,3 +139,22 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is Read -> variable.freeVariables()
 	is Ref -> term.freeVariables()
 }
+
+fun TypedTerm.tree(indent : String = "") : String = "\n" + indent + when (this) {
+	is Variable -> this.name
+	is Abstraction -> "λ $binder : $argType ." + body.tree("$indent|   ")
+	is App -> "()" + left.tree("$indent|   ") + right.tree("$indent|   ")
+	is KeywordTerm -> TODO()
+	is LetBinding -> "let $binder" + bound.tree("$indent|   ") + expression.tree("$indent|   ")
+	is Record -> TODO()
+	is RecordProjection -> TODO()
+	is IfThenElse -> TODO()
+	is Fix -> TODO()
+	is TypedTerm.Unit -> "Unit"
+	is TypeDef -> TODO()
+	is Variant -> TODO()
+	is Case -> TODO()
+	is Assign -> TODO()
+	is Read -> TODO()
+	is Ref -> TODO()
+}

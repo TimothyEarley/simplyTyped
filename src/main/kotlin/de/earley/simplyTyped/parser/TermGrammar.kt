@@ -1,6 +1,9 @@
 package de.earley.simplyTyped.parser
 
+import de.earley.newParser.*
+import de.earley.parser.Token
 import de.earley.parser.combinators.*
+import de.earley.parser.combinators.void
 import de.earley.parser.context
 import de.earley.parser.src
 import de.earley.simplyTyped.terms.TypedTerm
@@ -55,6 +58,36 @@ object TermGrammar {
 		RecordGrammar.projection or
 		safeTerm or
 		abstraction
+	}
+
+	val newTerm : Parser<Token<SimplyTypedLambdaToken>, TypedTerm> = recursive { term ->
+		val app = named("app") { (term + term).map { a, b -> TypedTerm.App(a, b, a.src) } }
+		val paren = named("paren") { token(OpenParen).void() + term + token(ClosedParen).void() }
+		val lambda = named("lambda") {
+			(
+					token(Lambda).src() +
+					token(Identifier).string() +
+					token(Colon).void() +
+					TypeGrammar.newType +
+					token(Dot).void() +
+					term
+			).map { src, x, type, body -> TypedTerm.Abstraction(x, type, body, src) }
+		}
+		val variable = named("variable") {
+			token(Identifier).map { TypedTerm.Variable(it.value, it.src()) }
+		}
+
+		// important: order specifies precedence
+		named("term") {
+			paren or
+			lambda or
+			// TypeDefGrammar.newTypeDef(term) or
+			LetBindingGrammar.newBinding(term) or
+			// ArithmeticGrammar.newArithmeticExpression(term) or
+			app or
+			variable or
+			UnitParser.newUnit
+		}
 	}
 
 }

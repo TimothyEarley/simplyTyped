@@ -1,10 +1,13 @@
 package de.earley.simplyTyped.parser
 
+import de.earley.newParser.*
+import de.earley.parser.Token
 import de.earley.parser.combinators.*
 import de.earley.parser.context
 import de.earley.parser.src
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.Number
+import de.earley.simplyTyped.terms.Keyword
 import de.earley.simplyTyped.terms.Keyword.Arithmetic
 import de.earley.simplyTyped.terms.Keyword.Bools
 import de.earley.simplyTyped.terms.TypedTerm
@@ -41,5 +44,25 @@ object ArithmeticGrammar {
 	}
 
 	val arithmeticExpression: P<TypedTerm> = number or boolean or functions or ifThenElse
+
+	fun newArithmeticExpression(term : Parser<Token<SimplyTypedLambdaToken>, TypedTerm>) = named("arith") {
+		val ifThenElse = (token(If).src() +
+				term +
+				token(Then).void() +
+				term +
+				token(Else).void() +
+				term
+				).map { src, condition, then, `else` -> TypedTerm.IfThenElse(condition, then, `else`, src) }
+
+		fun keyword(type : SimplyTypedLambdaToken, keyword : Keyword) =
+				token(type).src().map { TypedTerm.KeywordTerm(keyword, it) }
+
+		ifThenElse or
+				keyword(True, Bools.True) or
+				keyword(False, Bools.False) or
+				keyword(Succ, Arithmetic.Succ) or
+				keyword(Pred, Arithmetic.Pred) or
+				keyword(IsZero, Arithmetic.IsZero)
+	}
 
 }

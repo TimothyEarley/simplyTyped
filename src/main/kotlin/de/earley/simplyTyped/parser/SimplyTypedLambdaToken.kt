@@ -40,6 +40,7 @@ enum class SimplyTypedLambdaToken(r: String): TokenType {
 	Number("\\d+"),
 	Identifier("\\w+"),
 	WS("\\s"),
+	COMMENT("#.*?(\n|$)"),
 	EOF("\\z"); //TODO better EOF handling
 
 	override val regex = Regex(r)

@@ -1,5 +1,6 @@
 package de.earley.simplyTyped
 
+import de.earley.newParser.deriveAll
 import de.earley.parser.*
 import de.earley.simplyTyped.parser.SimplyTypedGrammar
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken
@@ -15,9 +16,12 @@ import kotlin.system.exitProcess
 fun main() {
 	val process =
 		::readSrc +
+//		::extraParens +
 		::lexer +
 //		::debugTokens +
-		::parser +
+//		::parser +
+		::newParser +
+//		::treeVis +
 		::checkFreeVariables +
 		::unname +
 		::resolveUserTypes +
@@ -27,7 +31,8 @@ fun main() {
 		::eval +
 		::log
 
-	process("/list.tl")
+	process("/simple.tl")
+//	process("/list.tl")
 //	process("/source.tl")
 //	process("/counter.tl")
 
@@ -37,13 +42,25 @@ fun main() {
 fun readSrc(file: String) = SimplyTypedGrammar::class.java.getResourceAsStream(file)
 	.readBytes().decodeToString()
 
-fun lexer(src: String) = lex("($src)", values(), EOF)
-	.filter { it.type != WS }
+fun extraParens(src : String) : String = "($src)"
 
-fun parser(tokens: TokenStream<SimplyTypedLambdaToken>) = SimplyTypedGrammar.grammar.run(tokens).orExit()
+fun lexer(src: String) = lex(src, values(), EOF)
+		.filter { it.type != WS }
+		.filter { it.type != COMMENT }
+
+fun parser(tokens: TokenStream<SimplyTypedLambdaToken>): TypedTerm = SimplyTypedGrammar.grammar.run(tokens).orExit()
+
+fun newParser(tokens : TokenStream<SimplyTypedLambdaToken>): TypedTerm =
+		SimplyTypedGrammar.newGrammar.deriveAll(tokens.toSequence()).also {
+			println(it)
+		}.first()
+
+fun treeVis(t : TypedTerm): TypedTerm = t.also {
+	println(t.tree())
+}
 
 fun checkFreeVariables(parsed: TypedTerm): TypedTerm {
-	require(parsed.freeVariables().isEmpty()) { "free variables: " + parsed.freeVariables() }
+	require(parsed.freeVariables().isEmpty()) { "free variables: ${parsed.freeVariables()} in $parsed" }
 	return parsed
 }
 

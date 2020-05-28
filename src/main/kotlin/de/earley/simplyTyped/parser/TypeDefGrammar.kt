@@ -1,5 +1,7 @@
 package de.earley.simplyTyped.parser
 
+import de.earley.newParser.*
+import de.earley.parser.Token
 import de.earley.parser.combinators.*
 import de.earley.parser.context
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
@@ -27,6 +29,19 @@ object TypeDefGrammar {
 	}.map { src, name, type, body -> TypedTerm.TypeDef(name, type, body, src) }
 
 	val typeDef: P<TypedTerm> = simpleTypeDef or recTypeDef
+
+	fun newTypeDef(term : Parser<Token<SimplyTypedLambdaToken>, TypedTerm>) : Parser<Token<SimplyTypedLambdaToken>, TypedTerm> = named("type def") {
+		val simpleTypeDef = (token(TypeDef).src() +
+				token(Identifier).string() +
+				token(Equals).void() +
+				TypeGrammar.newType +
+				token(In).void() +
+				term
+				).map { src, name, type, body -> TypedTerm.TypeDef(name, type, body, src) }
+
+		simpleTypeDef
+
+	}
 
 }
 
