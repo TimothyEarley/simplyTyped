@@ -1,10 +1,13 @@
 package de.earley.newParser
 
-object Empty : Parser<Any?, Nothing> {
-    override fun derive(a: Any?)  = Empty
-    override fun deriveNull() = emptySet<Nothing>()
+/**
+ * Represents a failed parser
+ */
+data class Empty(val error : ParseResult.Error) : Parser<Any?, Nothing> {
+    override fun derive(a: Any?)  = this
+    override fun deriveNull() = error
 
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<Any?, Nothing> = Empty
+    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<Any?, Nothing> = this
 
     override fun toDot(seen: MutableSet<Parser<*, *>>) = ifNotSeen(seen, "") {
         dotNode("Empty")

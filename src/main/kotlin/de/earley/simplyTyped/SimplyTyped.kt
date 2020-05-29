@@ -1,5 +1,7 @@
 package de.earley.simplyTyped
 
+import de.earley.newParser.ErrorData
+import de.earley.newParser.ParseResult
 import de.earley.newParser.deriveAll
 import de.earley.parser.*
 import de.earley.simplyTyped.parser.SimplyTypedGrammar
@@ -31,9 +33,9 @@ fun main() {
 		::eval +
 		::log
 
-	process("/simple.tl")
+//	process("/simple.tl")
 //	process("/list.tl")
-//	process("/source.tl")
+	process("/source.tl")
 //	process("/counter.tl")
 
 }
@@ -51,9 +53,24 @@ fun lexer(src: String) = lex(src, values(), EOF)
 fun parser(tokens: TokenStream<SimplyTypedLambdaToken>): TypedTerm = SimplyTypedGrammar.grammar.run(tokens).orExit()
 
 fun newParser(tokens : TokenStream<SimplyTypedLambdaToken>): TypedTerm =
-		SimplyTypedGrammar.newGrammar.deriveAll(tokens.toSequence()).also {
-			println(it)
-		}.first()
+		when (val result = SimplyTypedGrammar.newGrammar.deriveAll(tokens.toSequence())) {
+			is ParseResult.Ok.Single -> result.t
+			is ParseResult.Ok.Multiple -> result.set.also { println(it) }.first()
+			is ParseResult.Error -> {
+				System.err.println("Error parsing:")
+				println(result.error.pretty())
+				exitProcess(1)
+			}
+		}
+
+private fun ErrorData.pretty(): String = when (this) {
+	ErrorData.Fix -> "No candidate in recursion"
+	ErrorData.EmptyCombine -> TODO()
+	is ErrorData.Multiple -> errors.joinToString(separator = "\n - ") { it.pretty() }
+	is ErrorData.Expected<*> -> "Expected $expected, but got $actual"
+	is ErrorData.Filtered<*> -> TODO()
+	is ErrorData.TempMsg -> TODO()
+}
 
 fun treeVis(t : TypedTerm): TypedTerm = t.also {
 	println(t.tree())

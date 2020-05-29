@@ -1,5 +1,8 @@
 package de.earley.newParser
 
+/**
+ * Concatenates two parsers.
+ */
 class Concat<I, A, B> internal constructor(
         private var p1 : Parser<I, A>,
         private var p2 : Parser<I, B>
@@ -7,9 +10,21 @@ class Concat<I, A, B> internal constructor(
     override fun innerDerive(i : I) =
         (p1.derive(i) + p2) or (Delta(p1) + p2.derive(i))
 
-    override fun innerDeriveNull() = p1.deriveNull().flatMapTo(mutableSetOf()) { a ->
-        p2.deriveNull().map {  b ->
-            a to b
+    override fun innerDeriveNull() : ParseResult<Pair<A, B>> {
+        val r1 = p1.deriveNull()
+        val r2 = p2.deriveNull()
+
+        //TODO map / flatMap for result
+        return when (r1) {
+            is ParseResult.Error -> r1
+            is ParseResult.Ok -> when (r2) {
+                is ParseResult.Error -> r2
+                is ParseResult.Ok -> ParseResult.Ok.Multiple.nonEmpty(r1.set().flatMapTo(mutableSetOf()) { a ->
+                    r2.set().map { b ->
+                        a to b
+                    }
+                })
+            }
         }
     }
 
@@ -21,8 +36,8 @@ class Concat<I, A, B> internal constructor(
         }
 
         return when {
-            p1 is Empty || p2 is Empty -> Empty
-            // TODO compaction with p1 = Epsilon
+            p1 is Empty -> p1 as Empty //TODO error msgs
+            p2 is Empty -> p2 as Empty // TODO compaction with p1 = Epsilon
             else -> this
         }
     }
@@ -34,7 +49,8 @@ class Concat<I, A, B> internal constructor(
 }
 
 private fun <I, A, B> doPlus(a : Parser<I, A>, b : Parser<I, B>) : Parser<I, Pair<A, B>> = when {
-    a is Empty || b is Empty -> Empty
+    a is Empty -> a //TODO error msgs
+    b is Empty -> b
     else -> Concat(a, b)
 }
 
