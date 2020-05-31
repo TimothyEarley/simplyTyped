@@ -16,11 +16,11 @@ abstract class Fix<I, O> : Parser<I, O> {
 
     abstract fun innerDerive(i : I): Parser<I, O>
 
-    private var result : ParseResult<O>? = null
-    override fun deriveNull(): ParseResult<O> {
+    private var result : ParseResult<I, O>? = null
+    override fun deriveNull(): ParseResult<I, O> {
         if (result != null) return result!!
 
-        var newResult : ParseResult<O> = ParseResult.Error(ErrorData.Fix)
+        var newResult : ParseResult<I, O> = ParseResult.Error(ErrorData.Fix)
         do {
             result = newResult // importantly this prevents looping this method
             newResult = innerDeriveNull()
@@ -29,7 +29,7 @@ abstract class Fix<I, O> : Parser<I, O> {
         return newResult
     }
 
-    abstract fun innerDeriveNull() : ParseResult<O>
+    abstract fun innerDeriveNull() : ParseResult<I, O>
 }
 
 private class Delay<I, O>(
@@ -41,7 +41,7 @@ private class Delay<I, O>(
     }
 
     override fun derive(i: I): Parser<I, O> = derivative.derive(i)
-    override fun deriveNull(): ParseResult<O> = derivative.deriveNull()
+    override fun deriveNull(): ParseResult<I, O> = derivative.deriveNull()
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = derivative.compact(seen)
 
     override fun toDot(seen: MutableSet<Parser<*, *>>) = ifNotSeen(seen, "") {

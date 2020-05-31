@@ -10,20 +10,13 @@ class Concat<I, A, B> internal constructor(
     override fun innerDerive(i : I) =
         (p1.derive(i) + p2) or (Delta(p1) + p2.derive(i))
 
-    override fun innerDeriveNull() : ParseResult<Pair<A, B>> {
+    override fun innerDeriveNull() : ParseResult<I, Pair<A, B>> {
         val r1 = p1.deriveNull()
         val r2 = p2.deriveNull()
 
-        //TODO map / flatMap for result
-        return when (r1) {
-            is ParseResult.Error -> r1
-            is ParseResult.Ok -> when (r2) {
-                is ParseResult.Error -> r2
-                is ParseResult.Ok -> ParseResult.Ok.Multiple.nonEmpty(r1.set().flatMapTo(mutableSetOf()) { a ->
-                    r2.set().map { b ->
-                        a to b
-                    }
-                })
+        return r1.flatMap { a ->
+            r2.map { b ->
+                a to b
             }
         }
     }
@@ -49,8 +42,8 @@ class Concat<I, A, B> internal constructor(
 }
 
 private fun <I, A, B> doPlus(a : Parser<I, A>, b : Parser<I, B>) : Parser<I, Pair<A, B>> = when {
-    a is Empty -> a //TODO error msgs
-    b is Empty -> b
+    a is Empty -> TODO() // a //TODO error msgs
+    b is Empty -> TODO() // b
     else -> Concat(a, b)
 }
 

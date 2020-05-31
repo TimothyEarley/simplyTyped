@@ -5,17 +5,12 @@ data class Reduce<I, A, B>(
         private val reduce : (A) -> B
 ) : Parser<I, B> {
     override fun derive(i: I) = Reduce(p.derive(i), reduce)
-    override fun deriveNull(): ParseResult<B> = when (val result = p.deriveNull()) {
-        is ParseResult.Ok.Single -> ParseResult.Ok.Single(reduce(result.t))
-        is ParseResult.Ok.Multiple -> ParseResult.Ok.Multiple.nonEmpty(result.set.map(reduce).toSet())
-        is ParseResult.Error -> result
-    }
-
+    override fun deriveNull(): ParseResult<I, B> = p.deriveNull().map(reduce)
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, B> = ifNotSeen(seen, this) {
         p = p.compact(seen)
 
         val result: Parser<I, B> = when (p) {
-            is Empty -> p as Empty
+            is Empty<I> -> p as Empty<I>
             //TODO combine reductions
             else -> this
         }

@@ -1,6 +1,7 @@
 package de.earley.simplyTyped
 
 import de.earley.newParser.ErrorData
+import de.earley.newParser.Named
 import de.earley.newParser.ParseResult
 import de.earley.newParser.deriveAll
 import de.earley.parser.*
@@ -33,9 +34,9 @@ fun main() {
 		::eval +
 		::log
 
-//	process("/simple.tl")
+	process("/simple.tl")
 //	process("/list.tl")
-	process("/source.tl")
+//	process("/source.tl")
 //	process("/counter.tl")
 
 }
@@ -58,19 +59,54 @@ fun newParser(tokens : TokenStream<SimplyTypedLambdaToken>): TypedTerm =
 			is ParseResult.Ok.Multiple -> result.set.also { println(it) }.first()
 			is ParseResult.Error -> {
 				System.err.println("Error parsing:")
-				println(result.error.pretty())
+				println(result.error.strip()?.pretty())
 				exitProcess(1)
 			}
 		}
 
-private fun ErrorData.pretty(): String = when (this) {
-	ErrorData.Fix -> "No candidate in recursion"
-	ErrorData.EmptyCombine -> TODO()
-	is ErrorData.Multiple -> errors.joinToString(separator = "\n - ") { it.pretty() }
-	is ErrorData.Expected<*> -> "Expected $expected, but got $actual"
-	is ErrorData.Filtered<*> -> TODO()
-	is ErrorData.TempMsg -> TODO()
+/**
+ * Simplify the error data
+ */
+private fun ErrorData<Token<*>>.strip(): ErrorData<Token<*>>? = when (this) {
+	ErrorData.Fix -> null
+	ErrorData.EmptyCombine -> null
+	is ErrorData.ExpectedName -> if (actual == null) null else this
+	is ErrorData.ExpectedEnd -> null
+	is ErrorData.Filtered<*> -> this
+	is ErrorData.Named -> {
+		when (val inner = data.strip()) {
+			is ErrorData.Named -> ErrorData.Named("$name.${inner.name}", inner.data)
+			else -> inner?.let { ErrorData.Named(name, inner) }
+		}
+	}
+	is ErrorData.Multiple -> {
+		val inner = errors.mapNotNull { it.strip() }
+		// TODO("remove non optimal errors")
+		if (inner.size == 1) inner.single()
+		else ErrorData.Multiple.from(inner)
+	}
 }
+
+private fun ErrorData<Token<*>>.pretty(): String = this.treeString(
+		{ when(this) {
+			ErrorData.Fix -> "End of recursion"
+			ErrorData.EmptyCombine -> TODO()
+			is ErrorData.Filtered<*> -> TODO()
+			is ErrorData.Named -> "<${name}>"
+			is ErrorData.Multiple -> "Multiple errors:"
+			is ErrorData.ExpectedName -> "(${actual?.src()}) Expected [$expected], got [${actual?.value}] (${actual?.type})"
+			is ErrorData.ExpectedEnd -> "(${actual.src()}) Expected the end, got [${actual.value}]"
+		} },
+		{ when(this) {
+			ErrorData.Fix -> emptyList()
+			ErrorData.EmptyCombine -> TODO()
+			is ErrorData.Filtered<*> -> TODO()
+			is ErrorData.Named -> listOf(data)
+			is ErrorData.Multiple -> errors.toList()
+			is ErrorData.ExpectedName -> emptyList()
+			is ErrorData.ExpectedEnd -> emptyList()
+		} }
+)
 
 fun treeVis(t : TypedTerm): TypedTerm = t.also {
 	println(t.tree())
@@ -105,4 +141,15 @@ fun debugTokens(tokens: TokenStream<SimplyTypedLambdaToken>) = tokens.also {
 
 operator fun <A, B, C> ((A) -> B).plus(other: (B) -> C): (A) -> C = {
 	other(this(it))
+}
+
+
+fun <T> T.treeString(
+		pretty : T.() -> String,
+		children : T.() -> List<T>,
+		indent: String = ""
+) : String {
+
+	return indent  + pretty(this) + "\n" + children(this).joinToString("") { it.treeString(pretty, children, "$indent|   ") }
+
 }

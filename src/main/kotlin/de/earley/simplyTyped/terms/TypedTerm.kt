@@ -3,6 +3,7 @@ package de.earley.simplyTyped.terms
 import de.earley.parser.Locatable
 import de.earley.parser.SourcePosition
 import de.earley.simplyTyped.terms.TypedTerm.*
+import de.earley.simplyTyped.treeString
 import de.earley.simplyTyped.types.Type
 
 typealias VariableName = String
@@ -140,21 +141,42 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 	is Ref -> term.freeVariables()
 }
 
-fun TypedTerm.tree(indent : String = "") : String = "\n" + indent + when (this) {
-	is Variable -> this.name
-	is Abstraction -> "λ $binder : $argType ." + body.tree("$indent|   ")
-	is App -> "()" + left.tree("$indent|   ") + right.tree("$indent|   ")
-	is KeywordTerm -> TODO()
-	is LetBinding -> "let $binder" + bound.tree("$indent|   ") + expression.tree("$indent|   ")
-	is Record -> TODO()
-	is RecordProjection -> TODO()
-	is IfThenElse -> TODO()
-	is Fix -> TODO()
-	is TypedTerm.Unit -> "Unit"
-	is TypeDef -> TODO()
-	is Variant -> TODO()
-	is Case -> TODO()
-	is Assign -> TODO()
-	is Read -> TODO()
-	is Ref -> TODO()
-}
+fun TypedTerm.tree() : String = treeString(
+		{ when (this) {
+			is Variable -> TODO()
+			is Abstraction -> TODO()
+			is App -> TODO()
+			is KeywordTerm -> TODO()
+			is LetBinding -> TODO()
+			is Record -> TODO()
+			is RecordProjection -> TODO()
+			is IfThenElse -> TODO()
+			is Fix -> TODO()
+			is TypedTerm.Unit -> TODO()
+			is TypeDef -> TODO()
+			is Variant -> TODO()
+			is Case -> TODO()
+			is Assign -> TODO()
+			is Read -> TODO()
+			is Ref -> TODO()
+		} },
+		{ when (this) {
+			is Variable -> TODO()
+			is Abstraction -> TODO()
+			is App -> TODO()
+			is KeywordTerm -> TODO()
+			is LetBinding -> TODO()
+			is Record -> TODO()
+			is RecordProjection -> TODO()
+			is IfThenElse -> TODO()
+			is Fix -> TODO()
+			is TypedTerm.Unit -> TODO()
+			is TypeDef -> TODO()
+			is Variant -> TODO()
+			is Case -> TODO()
+			is Assign -> TODO()
+			is Read -> TODO()
+			is Ref -> TODO()
+			else -> TODO()
+		} })
+

@@ -7,7 +7,7 @@ class Named<I, O>(
 ) : Parser<I, O> {
     override fun derive(i: I): Parser<I, O> = Named(name, p.derive(i))
 
-    override fun deriveNull(): ParseResult<O> = p.deriveNull()
+    override fun deriveNull(): ParseResult<I, O> = p.deriveNull().mapError { ParseResult.Error(ErrorData.Named(name, it.error)) }
 
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {
         p = p.compact(seen)

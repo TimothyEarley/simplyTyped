@@ -2,8 +2,9 @@ package de.earley.parser
 
 interface TokenType {
 	val regex: Regex
+	val symbol : String
 }
-data class Token<Type:TokenType>(
+data class Token<Type : TokenType>(
 	val line: Int,
 	val col: Int,
 	val value: String,

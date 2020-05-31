@@ -1,32 +1,24 @@
 package de.earley.newParser
 
-import de.earley.newParser.ParseResult.Error.Companion.combine
-
 class Alternative<I, O> internal constructor(
         var parsers : List<Parser<I, O>>
 ) : Fix<I, O>() {
     override fun innerDerive(i: I) = Alternative(parsers.map { it.derive(i) })
-    override fun innerDeriveNull() : ParseResult<O> {
-        //TODO duplicate code in compact
-        val (good, bad) = parsers.map { it.deriveNull() }
-                .partitionResult()
-        // TODO suppressed errors
-        return when (val result = good.combine()) {
-            is ParseResult.Ok -> result
-            is ParseResult.Error -> bad.combine()
-        }
-    }
+    override fun innerDeriveNull() : ParseResult<I, O> = parsers.map { it.deriveNull() }.combine()
 
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {
         //TODO error msg
         val (good, bad) = parsers.map { it.compact(seen) }
                 .partition { it !is Empty }
 
-        parsers = good
+        @Suppress("UNCHECKED_CAST") // checked by partition
         when {
-            parsers.isEmpty() -> Empty((bad as List<Empty>).map { it.error }.combine())
-            parsers.size == 1 -> parsers.first()
-            else -> this
+            good.isEmpty() -> Empty((bad as List<Empty<I>>).map { it.error }.combineErrors())
+            good.size == 1 -> parsers.first()
+            else -> {
+                parsers = good
+                this
+            }
         }
     }
 
@@ -44,23 +36,15 @@ class Alternative<I, O> internal constructor(
     }
 }
 
-private fun <T> Iterable<ParseResult<T>>.partitionResult(): Pair<List<ParseResult.Ok<T>>, List<ParseResult.Error>> {
-    val (ok, err) = partition { it is ParseResult.Ok }
-    @Suppress("UNCHECKED_CAST") // checked by partition, will break if third case is added
-    return (ok as List<ParseResult.Ok<T>>) to (err as List<ParseResult.Error>)
-}
-
 fun <I, O> or(vararg parsers : Parser<I, O>): Parser<I, O> {
-    val nonEmpty = parsers
+    val flattened = parsers
             .flatMap {
                 if (it is Alternative) it.parsers
                 else listOf(it)
             }
-            //TODO .filter { it != Empty }
-    return when {
-        nonEmpty.isEmpty() -> Empty(ParseResult.Error(ErrorData.TempMsg("TODO or all empty"))) //TODO error msg
-        nonEmpty.size == 1 -> nonEmpty.first()
-        else -> Alternative(nonEmpty.toMutableList())
+    return when (flattened.size) {
+        1 -> flattened.first()
+        else -> Alternative(flattened.toMutableList())
     }
 }
 

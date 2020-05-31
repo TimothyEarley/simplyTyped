@@ -8,7 +8,7 @@ class Filter<I, O>(
 
     override fun derive(i: I): Parser<I, O> = Filter(p.derive(i), cond, name)
 
-    override fun deriveNull(): ParseResult<O> = when (val result = p.deriveNull()) {
+    override fun deriveNull(): ParseResult<I, O> = when (val result = p.deriveNull()) {
         is ParseResult.Ok.Single -> if (cond(result.t)) result else ParseResult.Error(ErrorData.Filtered(result.t, name))
         is ParseResult.Ok.Multiple -> ParseResult.Ok.Multiple.nonEmpty(result.set.filter(cond).toSet()) //TODO error prop
         is ParseResult.Error -> result
