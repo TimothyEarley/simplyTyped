@@ -3,7 +3,6 @@ package de.earley.simplyTyped.parser
 import de.earley.newParser.*
 import de.earley.parser.Token
 import de.earley.parser.combinators.*
-import de.earley.parser.combinators.map
 import de.earley.parser.context
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 import de.earley.simplyTyped.types.Type
@@ -75,13 +74,19 @@ object TypeGrammar {
 	val newType : Parser<Token<SimplyTypedLambdaToken>, Type> = recursive { type ->
 		fun baseType(name : String, type : Type) = token(Identifier).matches(name).map { type }
 
-		val arrowType = named("arrow") { (type + token(Arrow).void() + type).map { from, to -> Type.FunctionType(from, to) }}
+		val parenType = token(OpenParen).void() + type + token(ClosedParen).void()
+		val arrowType = named("arrow") {
+			(type + token(Arrow).void() + type).map(Type::FunctionType)
+		}
+		val userType = token(Identifier).string().map(Type::UserType)
 
 		named("type") {
+			parenType or
 			baseType("Unit", Type.Unit) or
-					baseType("Bool", Type.Bool) or
-					baseType("Nat", Type.Nat) or
-					arrowType
+			baseType("Bool", Type.Bool) or
+			baseType("Nat", Type.Nat) or
+			arrowType or
+			userType
 		}
 	}
 }

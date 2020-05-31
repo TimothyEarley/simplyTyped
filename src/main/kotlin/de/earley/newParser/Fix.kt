@@ -47,9 +47,12 @@ private class Delay<I, O>(
     override fun toDot(seen: MutableSet<Parser<*, *>>) = ifNotSeen(seen, "") {
         dotNode("Delay")
     }
+
+    override fun toString(): String = "Delay[$input]($parser)"
 }
 
 private class PairMap<A, B, C> {
+    // TODO weak map
     private val data : MutableMap<A, MutableMap<B, C>> = hashMapOf()
     fun getOrPut(a : A, b : B, c : () -> C) : C {
         val inner = data.getOrPut(a) { hashMapOf()}

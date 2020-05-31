@@ -63,6 +63,7 @@ object ArithmeticGrammar {
 				keyword(Succ, Arithmetic.Succ) or
 				keyword(Pred, Arithmetic.Pred) or
 				keyword(IsZero, Arithmetic.IsZero)
+		//TODO number
 	}
 
 }

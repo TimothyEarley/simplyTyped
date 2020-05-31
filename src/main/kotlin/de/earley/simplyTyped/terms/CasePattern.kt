@@ -1,7 +1,5 @@
 package de.earley.simplyTyped.terms
 
-import de.earley.parser.SourcePosition
-
 data class CasePattern(
 	val slot: String,
 	val variableName: VariableName,

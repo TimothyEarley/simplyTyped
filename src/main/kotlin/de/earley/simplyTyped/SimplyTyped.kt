@@ -1,15 +1,15 @@
 package de.earley.simplyTyped
 
 import de.earley.newParser.ErrorData
-import de.earley.newParser.Named
 import de.earley.newParser.ParseResult
 import de.earley.newParser.deriveAll
+import de.earley.newParser.graphWriter
 import de.earley.parser.*
 import de.earley.simplyTyped.parser.SimplyTypedGrammar
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
+import de.earley.simplyTyped.parser.TermGrammar
 import de.earley.simplyTyped.terms.*
-import de.earley.simplyTyped.types.addFolding
 import de.earley.simplyTyped.types.recover
 import de.earley.simplyTyped.types.resolveUserTypes
 import de.earley.simplyTyped.types.type
@@ -17,6 +17,8 @@ import kotlin.system.exitProcess
 
 @ExperimentalStdlibApi
 fun main() {
+	TermGrammar.newTerm.graphWriter("grammar.dot")
+
 	val process =
 		::readSrc +
 //		::extraParens +
@@ -34,9 +36,9 @@ fun main() {
 		::eval +
 		::log
 
-	process("/simple.tl")
+//	process("/simple.tl")
 //	process("/list.tl")
-//	process("/source.tl")
+	process("/source.tl")
 //	process("/counter.tl")
 
 }
@@ -56,7 +58,10 @@ fun parser(tokens: TokenStream<SimplyTypedLambdaToken>): TypedTerm = SimplyTyped
 fun newParser(tokens : TokenStream<SimplyTypedLambdaToken>): TypedTerm =
 		when (val result = SimplyTypedGrammar.newGrammar.deriveAll(tokens.toSequence())) {
 			is ParseResult.Ok.Single -> result.t
-			is ParseResult.Ok.Multiple -> result.set.also { println(it) }.first()
+			is ParseResult.Ok.Multiple -> result.set.also {
+				//TODO way too many trees
+				println("${result.set.size} trees found.")
+			}.first()
 			is ParseResult.Error -> {
 				System.err.println("Error parsing:")
 				println(result.error.strip()?.pretty())
@@ -71,7 +76,7 @@ private fun ErrorData<Token<*>>.strip(): ErrorData<Token<*>>? = when (this) {
 	ErrorData.Fix -> null
 	ErrorData.EmptyCombine -> null
 	is ErrorData.ExpectedName -> if (actual == null) null else this
-	is ErrorData.ExpectedEnd -> null
+	is ErrorData.ExpectedEnd -> this
 	is ErrorData.Filtered<*> -> this
 	is ErrorData.Named -> {
 		when (val inner = data.strip()) {
@@ -81,9 +86,11 @@ private fun ErrorData<Token<*>>.strip(): ErrorData<Token<*>>? = when (this) {
 	}
 	is ErrorData.Multiple -> {
 		val inner = errors.mapNotNull { it.strip() }
-		// TODO("remove non optimal errors")
-		if (inner.size == 1) inner.single()
-		else ErrorData.Multiple.from(inner)
+		when (inner.size) {
+			0 -> null //TODO this seems wrong
+			1 -> inner.single()
+			else -> ErrorData.Multiple.from(inner)
+		}
 	}
 }
 
@@ -95,7 +102,7 @@ private fun ErrorData<Token<*>>.pretty(): String = this.treeString(
 			is ErrorData.Named -> "<${name}>"
 			is ErrorData.Multiple -> "Multiple errors:"
 			is ErrorData.ExpectedName -> "(${actual?.src()}) Expected [$expected], got [${actual?.value}] (${actual?.type})"
-			is ErrorData.ExpectedEnd -> "(${actual.src()}) Expected the end, got [${actual.value}]"
+			is ErrorData.ExpectedEnd -> "(${actual.src()}) Expected the end, got [${actual.value}] (${actual.type})"
 		} },
 		{ when(this) {
 			ErrorData.Fix -> emptyList()

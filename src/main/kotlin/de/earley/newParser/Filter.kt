@@ -22,6 +22,8 @@ class Filter<I, O>(
     override fun toDot(seen: MutableSet<Parser<*, *>>): String = ifNotSeen(seen, "") {
         dotNode("filter $name") + p.toDot(seen) + dotPath(this, p)
     }
+
+    override fun toString(): String = "filter[$name]($p)"
 }
 
 fun <I, O> Parser<I, O>.filter(name : String, cond : (O) -> Boolean) : Parser<I, O> = Filter(this, cond, name)

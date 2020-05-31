@@ -81,9 +81,9 @@ object TermGrammar {
 		named("term") {
 			paren or
 			lambda or
-			// TypeDefGrammar.newTypeDef(term) or
 			LetBindingGrammar.newBinding(term) or
-			// ArithmeticGrammar.newArithmeticExpression(term) or
+			TypeDefGrammar.newTypeDef(term) or
+			ArithmeticGrammar.newArithmeticExpression(term) or
 			app or
 			variable or
 			UnitParser.newUnit

@@ -143,17 +143,17 @@ fun TypedTerm.freeVariables(): Set<Variable> = when (this) {
 
 fun TypedTerm.tree() : String = treeString(
 		{ when (this) {
-			is Variable -> TODO()
-			is Abstraction -> TODO()
-			is App -> TODO()
-			is KeywordTerm -> TODO()
-			is LetBinding -> TODO()
+			is Variable -> name
+			is Abstraction -> "λ $binder : $argType ."
+			is App -> "app"
+			is KeywordTerm -> keyword.name
+			is LetBinding -> "let $binder ="
 			is Record -> TODO()
 			is RecordProjection -> TODO()
-			is IfThenElse -> TODO()
-			is Fix -> TODO()
-			is TypedTerm.Unit -> TODO()
-			is TypeDef -> TODO()
+			is IfThenElse -> "if then else"
+			is Fix -> "fix"
+			is TypedTerm.Unit -> "unit"
+			is TypeDef -> "type $name = $type"
 			is Variant -> TODO()
 			is Case -> TODO()
 			is Assign -> TODO()
@@ -161,22 +161,21 @@ fun TypedTerm.tree() : String = treeString(
 			is Ref -> TODO()
 		} },
 		{ when (this) {
-			is Variable -> TODO()
-			is Abstraction -> TODO()
-			is App -> TODO()
-			is KeywordTerm -> TODO()
-			is LetBinding -> TODO()
+			is Variable -> emptyList()
+			is Abstraction -> listOf(body)
+			is App -> listOf(left, right)
+			is KeywordTerm -> emptyList()
+			is LetBinding -> listOf(bound, expression)
 			is Record -> TODO()
 			is RecordProjection -> TODO()
-			is IfThenElse -> TODO()
-			is Fix -> TODO()
-			is TypedTerm.Unit -> TODO()
-			is TypeDef -> TODO()
+			is IfThenElse -> listOf(condition, then, `else`)
+			is Fix -> listOf(func)
+			is TypedTerm.Unit -> emptyList()
+			is TypeDef -> listOf(body)
 			is Variant -> TODO()
 			is Case -> TODO()
 			is Assign -> TODO()
 			is Read -> TODO()
 			is Ref -> TODO()
-			else -> TODO()
 		} })
 

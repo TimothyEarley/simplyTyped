@@ -47,6 +47,8 @@ sealed class ErrorData<out I> {
                 return Multiple(flattened.toSet())
             }
         }
+
+        override fun toString(): String = "ErrorData.Multiple(${errors.joinToString()})"
     }
 }
 

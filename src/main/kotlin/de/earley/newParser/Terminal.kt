@@ -18,12 +18,14 @@ data class Terminal<I>(val name: String, val check: (I) -> Boolean) : Parser<I, 
     override fun toDot(seen: MutableSet<Parser<*, *>>) = ifNotSeen(seen, "") {
         dotNode(name)
     }
+
+    override fun toString(): String = name
 }
 
 // Token stuff
 
 //TODO rename to "isA"
 fun <T : TokenType> token(type : T) : Parser<Token<T>, Token<T>> = Terminal(type.symbol) { it.type == type }
-fun <I, T : TokenType> Parser<I, Token<T>>.src() : Parser<I, SourcePosition> = map { it.src() }
-fun <I, T : TokenType> Parser<I, Token<T>>.string() : Parser<I, String> = map { it.value }
+fun <I, T : TokenType> Parser<I, Token<T>>.src() : Parser<I, SourcePosition> = Reduce(this, "src") { it.src() }
+fun <I, T : TokenType> Parser<I, Token<T>>.string() : Parser<I, String> = Reduce(this, "string") { it.value }
 fun <I, T : TokenType> Parser<I, Token<T>>.matches(name : String) : Parser<I, Token<T>> = filter("matches '$name'") { it.value == name }

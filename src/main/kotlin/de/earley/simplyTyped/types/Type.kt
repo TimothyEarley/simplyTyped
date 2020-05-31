@@ -6,7 +6,7 @@ typealias TypeName = String
 
 sealed class Type {
 	data class FunctionType(val from: Type, val to: Type): Type() {
-		override fun toString(): String = "$from -> $to"
+		override fun toString(): String = "($from -> $to)"
 	}
 
 	data class RecordType(val types: Map<VariableName, Type>): Type() {

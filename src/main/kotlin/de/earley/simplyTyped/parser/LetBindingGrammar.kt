@@ -4,9 +4,8 @@ import de.earley.newParser.*
 import de.earley.parser.Token
 import de.earley.parser.combinators.*
 import de.earley.parser.context
-import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
-import de.earley.simplyTyped.terms.Keyword
+import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.terms.fix
 
 object LetBindingGrammar {

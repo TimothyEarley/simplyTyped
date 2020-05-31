@@ -5,13 +5,11 @@ import de.earley.newParser.plus
 import de.earley.newParser.token
 import de.earley.newParser.void
 import de.earley.parser.Parser
-import de.earley.parser.TokenStream
 import de.earley.parser.combinators.isA
 import de.earley.parser.combinators.plus
 import de.earley.parser.combinators.void
 import de.earley.parser.context
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.EOF
-import de.earley.simplyTyped.terms.TypedTerm
 
 
 typealias P<R> = Parser<SimplyTypedLambdaToken, R>

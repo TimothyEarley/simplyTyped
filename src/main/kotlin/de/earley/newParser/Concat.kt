@@ -3,12 +3,18 @@ package de.earley.newParser
 /**
  * Concatenates two parsers.
  */
+// TODO vararg concat
 class Concat<I, A, B> internal constructor(
         private var p1 : Parser<I, A>,
         private var p2 : Parser<I, B>
 ) : Fix<I, Pair<A, B>>() {
-    override fun innerDerive(i : I) =
-        (p1.derive(i) + p2) or (Delta(p1) + p2.derive(i))
+    override fun innerDerive(i : I): Parser<I, Pair<A, B>> {
+        // the input is in the first parser
+        val inFirst = p1.derive(i) + p2
+        // the input is in the second parser and the first parser is finished
+        val inSecond = delta(p1) + p2.derive(i)
+        return inFirst or inSecond
+    }
 
     override fun innerDeriveNull() : ParseResult<I, Pair<A, B>> {
         val r1 = p1.deriveNull()
@@ -39,11 +45,13 @@ class Concat<I, A, B> internal constructor(
         dotNode("Concat") + p1.toDot(seen) + p2.toDot(seen) + dotPath(this, p1, "1") + dotPath(this, p2, "2")
     }
 
+    override fun toString(): String = "($p1 + $p2)"
+
 }
 
 private fun <I, A, B> doPlus(a : Parser<I, A>, b : Parser<I, B>) : Parser<I, Pair<A, B>> = when {
-    a is Empty -> TODO() // a //TODO error msgs
-    b is Empty -> TODO() // b
+    a is Empty -> a
+    b is Empty -> b
     else -> Concat(a, b)
 }
 
@@ -62,5 +70,5 @@ operator fun <I> Parser<I, VOID>.plus(other : Parser<I, VOID>) : Parser<I, VOID>
         doPlus(this, other).map { _ -> VOID }
 
 object VOID
-fun <I, O> Parser<I, O>.void() : Parser<I, VOID> = this.map { VOID }
+fun <I, O> Parser<I, O>.void() : Parser<I, VOID> = Reduce(this, "void") { VOID }
 

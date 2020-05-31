@@ -1,7 +1,5 @@
 package de.earley.simplyTyped.terms
 
-import de.earley.simplyTyped.types.Type
-
 sealed class UntypedNamelessTerm {
 	data class Variable(val number: Int): UntypedNamelessTerm() {
 		override fun toString(): String = "v$number"

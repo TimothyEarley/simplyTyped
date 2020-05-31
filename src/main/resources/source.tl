@@ -1,4 +1,5 @@
-type BiOp = Nat -> Nat -> Nat in
+#TODO remove parens in arrow type
+type BiOp = Nat -> (Nat -> Nat) in
 
 let and = λ a:Bool . λ b:Bool . if a
 	then b
@@ -7,7 +8,7 @@ in
 
 let not = λ b:Bool . if b then false else true in
 
-letrec equal : Nat -> Nat -> Bool =
+letrec equal : Nat -> (Nat -> Bool) =
 	λ a:Nat . λ b:Nat . if iszero a
 		then iszero b
 		else if iszero b

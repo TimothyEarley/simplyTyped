@@ -7,6 +7,7 @@ class Alternative<I, O> internal constructor(
     override fun innerDeriveNull() : ParseResult<I, O> = parsers.map { it.deriveNull() }.combine()
 
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {
+        // assume all are flattened already
         //TODO error msg
         val (good, bad) = parsers.map { it.compact(seen) }
                 .partition { it !is Empty }
@@ -14,7 +15,7 @@ class Alternative<I, O> internal constructor(
         @Suppress("UNCHECKED_CAST") // checked by partition
         when {
             good.isEmpty() -> Empty((bad as List<Empty<I>>).map { it.error }.combineErrors())
-            good.size == 1 -> parsers.first()
+            good.size == 1 -> good.first()
             else -> {
                 parsers = good
                 this
@@ -34,9 +35,12 @@ class Alternative<I, O> internal constructor(
 
         sb.toString()
     }
+
+    override fun toString(): String = "(" + parsers.joinToString(" or ") + ")"
 }
 
 fun <I, O> or(vararg parsers : Parser<I, O>): Parser<I, O> {
+    //TODO compact?
     val flattened = parsers
             .flatMap {
                 if (it is Alternative) it.parsers
