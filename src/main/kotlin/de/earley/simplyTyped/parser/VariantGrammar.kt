@@ -1,6 +1,8 @@
 package de.earley.simplyTyped.parser
 
+import de.earley.newParser.*
 import de.earley.parser.combinators.*
+import de.earley.parser.combinators.void
 import de.earley.parser.context
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 import de.earley.simplyTyped.terms.CasePattern
@@ -37,4 +39,36 @@ object VariantGrammar {
 
 	val variants = variant or case
 
+}
+
+fun newVariantGrammar(term : TermParser) : TermParser {
+	val variant = named("variant") {
+		token(OpenAngle).src() +
+				token(Identifier).string() +
+				token(Equals).void() +
+				term +
+				token(ClosedAngle).void() +
+				token(Identifier).matches("as").void() +
+				TypeGrammar.newType
+	}.map { src, slot, t, type -> TypedTerm.Variant(slot, t, type, src) }
+
+	val pattern = named("pattern") {
+		token(OpenAngle).void() +
+				token(Identifier).string() +
+				token(Equals).void() +
+				token(Identifier).string() +
+				token(ClosedAngle).void() +
+				token(Equals).void() +
+				token(ClosedAngle).void() +
+				term
+	}.map(::CasePattern)
+
+	val case = named("case of") {
+		token(Case).src() +
+				term +
+				token(Identifier).matches("of").void() +
+				many(pattern, token(Pipe))
+	}.map { src, on, cases -> TypedTerm.Case(on, cases.toList(), src) }
+
+	return variant or case
 }

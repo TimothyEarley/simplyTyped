@@ -1,6 +1,9 @@
 package de.earley.simplyTyped.parser
 
+import de.earley.newParser.*
+import de.earley.parser.Token
 import de.earley.parser.combinators.*
+import de.earley.parser.combinators.many
 import de.earley.parser.context
 import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.terms.VariableName
@@ -23,4 +26,21 @@ object RecordGrammar {
 		isA(ClosedBracket).void()
 	}.map { src, entries -> TypedTerm.Record(entries.toMap(), src) }
 
+}
+
+fun newRecordGrammar(term : TermParser) : TermParser {
+	val recordEntry = token(Identifier).string() + token(Equals).void() + term
+
+	val record = named("record") {
+		(token(OpenBracket).src() +
+				many(recordEntry, token(Comma)) +
+				token(ClosedBracket).void()).map { src, entries -> TypedTerm.Record(entries.toMap(), src) }
+	}
+
+	val projection = named("projection") {
+		(term + token(Dot).src() + token(Identifier).string())
+				.map { record, src, project -> TypedTerm.RecordProjection(record, project, src) }
+	}
+
+	return record or projection
 }

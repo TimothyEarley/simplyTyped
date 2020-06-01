@@ -76,9 +76,23 @@ object TypeGrammar {
 
 		val parenType = token(OpenParen).void() + type + token(ClosedParen).void()
 		val arrowType = named("arrow") {
-			(type + token(Arrow).void() + type).map(Type::FunctionType)
+			(type + token(Arrow).void() + type).rightAssoc().map(Type::FunctionType)
 		}
 		val userType = token(Identifier).string().map(Type::UserType)
+
+		 val recordType = named("record type") {
+			token(OpenBracket).void() +
+			many(token(Identifier).string() + token(Colon).void() + type, token(Comma)).leftAssoc() +
+			token(ClosedBracket).void()
+		}.map { types -> Type.RecordType(types.toMap()) }
+
+		val variantType = named("variant type") {
+			token(OpenAngle).void() +
+					many(token(Identifier).string() + token(Equals).void() + type, token(Comma)) +
+					token(ClosedAngle).void()
+		}.map { variants ->
+			Type.Variant(variants.toMap())
+		}
 
 		named("type") {
 			parenType or
@@ -86,7 +100,9 @@ object TypeGrammar {
 			baseType("Bool", Type.Bool) or
 			baseType("Nat", Type.Nat) or
 			arrowType or
-			userType
-		}
+			userType or
+			recordType or
+			variantType
+		}.leftAssoc()
 	}
 }

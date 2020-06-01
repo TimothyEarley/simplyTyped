@@ -60,8 +60,8 @@ object TermGrammar {
 		abstraction
 	}
 
-	val newTerm : Parser<Token<SimplyTypedLambdaToken>, TypedTerm> = recursive { term ->
-		val app = named("app") { (term + term).map { a, b -> TypedTerm.App(a, b, a.src) } }
+	val newTerm : TermParser = recursive { term ->
+		val app = named("app") { (term + term).leftAssoc().map { a, b -> TypedTerm.App(a, b, a.src) } }
 		val paren = named("paren") { token(OpenParen).void() + term + token(ClosedParen).void() }
 		val lambda = named("lambda") {
 			(
@@ -71,7 +71,7 @@ object TermGrammar {
 					TypeGrammar.newType +
 					token(Dot).void() +
 					term
-			).map { src, x, type, body -> TypedTerm.Abstraction(x, type, body, src) }
+			).leftAssoc().map { src, x, type, body -> TypedTerm.Abstraction(x, type, body, src) }
 		}
 		val variable = named("variable") {
 			token(Identifier).map { TypedTerm.Variable(it.value, it.src()) }
@@ -84,6 +84,8 @@ object TermGrammar {
 			LetBindingGrammar.newBinding(term) or
 			TypeDefGrammar.newTypeDef(term) or
 			ArithmeticGrammar.newArithmeticExpression(term) or
+			newVariantGrammar(term) or
+			newRecordGrammar(term) or
 			app or
 			variable or
 			UnitParser.newUnit
@@ -91,3 +93,5 @@ object TermGrammar {
 	}
 
 }
+
+typealias TermParser = Parser<Token<SimplyTypedLambdaToken>, TypedTerm>

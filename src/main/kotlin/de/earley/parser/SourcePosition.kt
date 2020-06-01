@@ -9,6 +9,7 @@ data class SourcePosition(
 
 	companion object {
 		val Synth = SourcePosition(Int.MAX_VALUE, Int.MAX_VALUE)
+		val Start = SourcePosition(0, 0)
 	}
 
 	override fun compareTo(other: SourcePosition): Int {

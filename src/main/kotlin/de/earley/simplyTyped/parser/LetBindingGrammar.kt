@@ -7,6 +7,7 @@ import de.earley.parser.context
 import de.earley.simplyTyped.parser.SimplyTypedLambdaToken.*
 import de.earley.simplyTyped.terms.TypedTerm
 import de.earley.simplyTyped.terms.fix
+import sun.reflect.generics.tree.TypeTree
 
 object LetBindingGrammar {
 	private val letBinding: P<TypedTerm.LetBinding> = context("let binding") {
@@ -40,8 +41,9 @@ object LetBindingGrammar {
 
 	val binding = letBinding or letrecBinding
 
-	fun newBinding(term : Parser<Token<SimplyTypedLambdaToken>, TypedTerm>) = named("binding") {
-		val letRecBinding = (token(LetRec).src() +
+	fun newBinding(term : TermParser) = named("binding") {
+		val letRecBinding = named("rec") {(
+				token(LetRec).src() +
 				token(Identifier).string() +
 				token(Colon).void() +
 				TypeGrammar.newType +
@@ -49,11 +51,11 @@ object LetBindingGrammar {
 				term +
 				token(In).void() +
 				term
-				).map { src, binder, type, bound, expression ->
-					// syntax desugaring
-					// letrec x : T = t1 in t2 => let x = fix (λx : T.t1) in t2
+			).map { src, binder, type, bound, expression ->
+			// syntax desugaring
+			// letrec x : T = t1 in t2 => let x = fix (λx : T.t1) in t2
 			TypedTerm.LetBinding(binder, fix(binder, type, bound), expression, src)
-		}
+		}}
 
 		val letBinding = (token(Let).src() +
 				token(Identifier).string() +

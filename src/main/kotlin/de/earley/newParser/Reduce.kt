@@ -8,9 +8,14 @@ data class Reduce<I, A, B>(
     override fun derive(i: I) = Reduce(p.derive(i), name, reduce)
     override fun deriveNull(): ParseResult<I, B> = p.deriveNull().map(reduce)
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, B> = ifNotSeen(seen, this) {
-        val result : Parser<I, B> = when (val compact = p.compact(seen)) {
-            is Empty<I> -> compact
+        val compact = p.compact(seen)
+        val result : Parser<I, B> = when {
+            compact is Empty<I> -> compact
             //TODO can I merge reduces? Typing it is difficult
+
+            //TODO make this more general (mark things that can be trvially reduced)
+            compact is Epsilon<I, A> -> epsilon(compact.result.map(reduce))
+            compact is Concat<I, *, *> && compact.first is Epsilon && compact.second is Epsilon -> epsilon(compact.deriveNull().map { reduce(it as A)})
             else -> {
                 p = compact
                 this

@@ -45,7 +45,7 @@ object ArithmeticGrammar {
 
 	val arithmeticExpression: P<TypedTerm> = number or boolean or functions or ifThenElse
 
-	fun newArithmeticExpression(term : Parser<Token<SimplyTypedLambdaToken>, TypedTerm>) = named("arith") {
+	fun newArithmeticExpression(term : TermParser) = named("arith") {
 		val ifThenElse = (token(If).src() +
 				term +
 				token(Then).void() +
@@ -57,13 +57,15 @@ object ArithmeticGrammar {
 		fun keyword(type : SimplyTypedLambdaToken, keyword : Keyword) =
 				token(type).src().map { TypedTerm.KeywordTerm(keyword, it) }
 
+		val number = token(Number).map { n -> numberTerm(n.value.toInt(), n.src()) }
+
 		ifThenElse or
 				keyword(True, Bools.True) or
 				keyword(False, Bools.False) or
 				keyword(Succ, Arithmetic.Succ) or
 				keyword(Pred, Arithmetic.Pred) or
-				keyword(IsZero, Arithmetic.IsZero)
-		//TODO number
+				keyword(IsZero, Arithmetic.IsZero) or
+				number
 	}
 
 }

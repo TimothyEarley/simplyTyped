@@ -8,6 +8,11 @@ class Concat<I, A, B> internal constructor(
         private var p1 : Parser<I, A>,
         private var p2 : Parser<I, B>
 ) : Fix<I, Pair<A, B>>() {
+    val first : Parser<I, A>
+        get() = p1
+    val second : Parser<I, B>
+        get() = p2
+
     override fun innerDerive(i : I): Parser<I, Pair<A, B>> {
         // the input is in the first parser
         val inFirst = p1.derive(i) + p2
@@ -72,3 +77,25 @@ operator fun <I> Parser<I, VOID>.plus(other : Parser<I, VOID>) : Parser<I, VOID>
 object VOID
 fun <I, O> Parser<I, O>.void() : Parser<I, VOID> = Reduce(this, "void") { VOID }
 
+
+/**
+ * Instances of [parser] separated by [delimiter].
+ */
+fun <I, O> many(parser : Parser<I, O>, delimiter : Parser<I, *>) : Parser<I, Iterable<O>> = recursive { many ->
+    val empty = epsilon<I, List<O>>(emptyList())
+    // 1 , 2 , 3
+    val one = parser.map { listOf(it) }
+    val more = (parser + delimiter.void() + many).map { head, tail ->
+        Cons(head, tail)
+    }
+
+    empty or one or more
+}
+
+// might be a case of premature optimisation. Used to construct the iterable in many
+private data class Cons<T>(val head : T, val tail : Iterable<T>) : Iterable<T> {
+    override fun iterator(): Iterator<T> = iterator {
+        yield(head)
+        yieldAll(tail)
+    }
+}

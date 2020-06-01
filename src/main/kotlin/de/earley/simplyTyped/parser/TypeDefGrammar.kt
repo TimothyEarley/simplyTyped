@@ -30,14 +30,14 @@ object TypeDefGrammar {
 
 	val typeDef: P<TypedTerm> = simpleTypeDef or recTypeDef
 
-	fun newTypeDef(term : Parser<Token<SimplyTypedLambdaToken>, TypedTerm>) : Parser<Token<SimplyTypedLambdaToken>, TypedTerm> = named("type def") {
+	fun newTypeDef(term : TermParser) : TermParser = named("type def") {
 		val simpleTypeDef = (token(TypeDef).src() +
 				token(Identifier).string() +
 				token(Equals).void() +
 				TypeGrammar.newType +
 				token(In).void() +
 				term
-				).map { src, name, type, body -> TypedTerm.TypeDef(name, type, body, src) }
+		).leftAssoc().map { src, name, type, body -> TypedTerm.TypeDef(name, type, body, src) }
 
 		simpleTypeDef
 

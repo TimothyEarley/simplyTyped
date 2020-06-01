@@ -3,7 +3,9 @@ package de.earley.newParser
 /**
  * A parser that accepts no more input. If at end, produces [result].
  */
-class Epsilon<I, O> internal constructor(private val result : ParseResult<I, O>) : Parser<I, O> {
+class Epsilon<I, O> internal constructor(
+        val result : ParseResult<I, O>
+) : Parser<I, O> {
     override fun derive(i: I): Parser<I, O> = Empty(ParseResult.Error(ErrorData.ExpectedEnd(i)))
     override fun deriveNull() = result
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = this
