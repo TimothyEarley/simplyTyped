@@ -22,6 +22,8 @@ data class Terminal<I>(val name: String, val check: (I) -> Boolean) : Parser<I, 
     override fun toString(): String = name
 }
 
+fun char(c : Char) : Parser<Char, Char> = Terminal(c.toString()) { it == c }
+
 // Token stuff
 
 //TODO rename to "isA"

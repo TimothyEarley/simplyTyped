@@ -8,10 +8,11 @@ class Alternative<I, O> internal constructor(
 
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {
         // assume all are flattened already
-        //TODO error msg
         val (good, bad) = parsers.map { it.compact(seen) }
                 .partition { it !is Empty }
 
+        //TODO use same abstraction as [combine]
+        //TODO we loose error info here
         @Suppress("UNCHECKED_CAST") // checked by partition
         when {
             good.isEmpty() -> Empty((bad as List<Empty<I>>).map { it.error }.combineErrors())

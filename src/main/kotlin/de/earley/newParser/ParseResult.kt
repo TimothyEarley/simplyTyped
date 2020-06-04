@@ -1,5 +1,7 @@
 package de.earley.newParser
 
+import java.util.*
+
 sealed class ParseResult<out I, out O> {
     sealed class Ok<O> : ParseResult<Nothing, O>() {
         data class Single<T>(val t : T) : Ok<T>()
@@ -43,10 +45,15 @@ sealed class ErrorData<out I> {
                 val flattened = errors.flatMap { when (it) {
                     is Multiple -> it.errors
                     else -> listOf(it)
-                } }
-                return Multiple(flattened.toSet())
+                } }.toSet()
+                return if (flattened.size == 1) flattened.first() else Multiple(flattened)
             }
         }
+
+        override fun equals(other: Any?): Boolean =
+                if (other !is Multiple<*>) false
+                else errors == other.errors
+        override fun hashCode(): Int = Objects.hash(errors)
 
         override fun toString(): String = "ErrorData.Multiple(${errors.joinToString()})"
     }
@@ -75,18 +82,16 @@ fun <I, T> List<ParseResult<I, T>>.combine() : ParseResult<I, T> {
 
     // TODO suppressed errors
     return when (val result = good.combineOks()) {
-        is ParseResult.Ok -> result
+        is ParseResult.Ok -> result //TODO we loose error info here
         is ParseResult.Error -> bad.combineErrors()
     }
 }
 
-fun <T> List<ParseResult.Ok<T>>.combineOks() : ParseResult<Nothing, T> {
+
+private fun <T> List<ParseResult.Ok<T>>.combineOks() : ParseResult<Nothing, T> {
     if (this.isEmpty()) return ParseResult.Error(ErrorData.EmptyCombine)
 
-    val set : Set<T> = this.flatMapTo(mutableSetOf<T>()) { when (it) {
-        is ParseResult.Ok.Single -> setOf(it.t)
-        is ParseResult.Ok.Multiple -> it.set
-    } }
+    val set : Set<T> = this.flatMapTo(mutableSetOf<T>()) { it.set() }
     return ParseResult.Ok.Multiple.nonEmpty(set)
 }
 

@@ -6,7 +6,9 @@ class Assoc<I, O>(
         private var parser : Parser<I, O>,
         private val left : Boolean
 ) : Parser<I, O> {
-    override fun deriveNull(): ParseResult<I, O> = when (val result = parser.deriveNull()) {
+    override fun deriveNull(): ParseResult<I, O> = applyAssoc(parser.deriveNull())
+
+    private fun applyAssoc(result : ParseResult<I, O>) : ParseResult<I, O> = when (result) {
         is ParseResult.Ok.Single -> result
         is ParseResult.Ok.Multiple -> ParseResult.Ok.Single(
                 if (left) result.set.first() else result.set.last()
@@ -26,7 +28,7 @@ class Assoc<I, O>(
         dotNode("left assoc") + parser.toDot(seen) + dotPath(this, parser)
     }
 
-    override fun toString(): String = "l($parser)"
+    override fun toString(): String = if (left) "l($parser)" else "r($parser)"
 }
 
 /**

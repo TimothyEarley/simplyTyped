@@ -12,9 +12,19 @@ repositories {
 }
 
 dependencies {
-	implementation(kotlin("stdlib"))
+	api(kotlin("stdlib"))
+
+	testImplementation("io.kotest:kotest-runner-junit5-jvm:4.0.6")
+	testImplementation("io.kotest:kotest-assertions-core-jvm:4.0.6")
 }
 
 tasks.withType<KotlinCompile>().all {
-	kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.contracts.ExperimentalContracts"
+	kotlinOptions {
+		jvmTarget = "1.8"
+		freeCompilerArgs += "-Xuse-experimental=kotlin.contracts.ExperimentalContracts"
+	}
+}
+
+tasks.withType<Test> {
+	useJUnitPlatform()
 }

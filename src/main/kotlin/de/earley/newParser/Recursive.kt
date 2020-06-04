@@ -10,8 +10,8 @@ class Recursive<I, O> : Fix<I, O>() {
     // not in dot graph
     override fun dotName(): String = p.dotName()
     override fun toDot(seen: MutableSet<Parser<*, *>>) = p.toDot(seen)
-    override fun toString(): String =
-        if (::p.isInitialized) p.toString() else "rec"
+    override fun toString(): String = //TODO combine rec with name to have nicer toString
+        if (::p.isInitialized) "rec(${p.hashCode()})" else "rec"
 }
 
 fun <I, O> recursive(block : (Parser<I, O>) -> Parser<I, O>) : Parser<I, O> {
