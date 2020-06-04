@@ -8,65 +8,77 @@ import de.earley.parser.src
 import de.earley.simplyTyped.treeString
 import kotlin.system.exitProcess
 
-/**
- * Simplify the error data
- */
-private fun ErrorData<Token<*>>.strip(force : Boolean): ErrorData<Token<*>>? = when (this) {
-    ErrorData.Fix -> null
-    ErrorData.EmptyCombine -> null
-    is ErrorData.ExpectedName -> if (actual == null) null else this
-    is ErrorData.ExpectedEnd -> if (force) null else this
-    is ErrorData.Filtered<*> -> this
-    is ErrorData.Named -> {
-        when (val inner = data.strip(force)) {
-            is ErrorData.Named -> ErrorData.Named("$name.${inner.name}", inner.data)
-            else -> inner?.let { ErrorData.Named(name, inner) }
-        }
+fun ErrorData<Token<SimplyTypedLambdaToken>>.mapByPosition() : Map<SourcePosition, ErrorData<Token<SimplyTypedLambdaToken>>> = when (this) {
+    ErrorData.Fix -> emptyMap()
+    is ErrorData.ExpectedName -> {
+        val pos = actual?.src() ?: SourcePosition.Start //TODO at end?
+        mapOf(pos to this)
+    }
+    is ErrorData.ExpectedEnd -> emptyMap() //TODO is this case useful? mapOf(actual.src() to this)
+    is ErrorData.Filtered<*> -> TODO()
+    is ErrorData.Named -> this.data.mapByPosition().mapValues { (_, v) ->
+        ErrorData.Named(name, v)
     }
     is ErrorData.Multiple -> {
-        val inner = errors.mapNotNull { it.strip(force) }
-        when (inner.size) {
-            0 -> null //TODO this seems wrong
-            1 -> inner.single()
-            else -> ErrorData.Multiple.from(inner)
-        }
+        this.errors.flatMap { it.mapByPosition().entries }
+                .groupBy({ it.key }, {it.value})
+                .mapValues { (_, v) -> ErrorData.Multiple.from(v) }
     }
 }
 
-fun ErrorData<Token<*>>.max() : Pair<SourcePosition, ErrorData<Token<*>>> = when (this) {
-    ErrorData.Fix -> SourcePosition.Start to this
-    ErrorData.EmptyCombine -> SourcePosition.Start to this
-    is ErrorData.ExpectedName -> (actual?.src() ?: SourcePosition.Start) to this
-    is ErrorData.ExpectedEnd -> actual.src() to this
-    is ErrorData.Filtered<*> -> SourcePosition.Start to this
-    is ErrorData.Named -> data.max().let { (pos, d) -> pos to ErrorData.Named(name, d) }
-    is ErrorData.Multiple -> errors.map { it.max() }.maxBy { it.first }!! // non empty
+fun ErrorData<Token<SimplyTypedLambdaToken>>.keepOneName() : Pair<Boolean, ErrorData<Token<SimplyTypedLambdaToken>>> = when (this) {
+    ErrorData.Fix -> false to this
+    is ErrorData.ExpectedName -> false to this
+    is ErrorData.ExpectedEnd -> false to this
+    is ErrorData.Filtered<*> -> false to this
+    is ErrorData.Named -> {
+        val (hasName, inner) = data.keepOneName()
+        true to if (hasName) inner else ErrorData.Named(name, inner)
+    }
+    is ErrorData.Multiple -> {
+        val inner = errors.map { it.keepOneName() }
+        val hasName = inner.any { it.first } //TODO any? all?
+        hasName to ErrorData.Multiple.from(inner.map { it.second })
+    }
 }
 
-private fun ErrorData<Token<*>>.pretty(): String = this.treeString(
-        { when(this) {
-            ErrorData.Fix -> "End of recursion"
-            ErrorData.EmptyCombine -> TODO()
-            is ErrorData.Filtered<*> -> TODO()
-            is ErrorData.Named -> "<${name}>"
-            is ErrorData.Multiple -> "Multiple errors:"
-            is ErrorData.ExpectedName -> "(${actual?.src()}) Expected [$expected], got [${actual?.value}] (${actual?.type})"
-            is ErrorData.ExpectedEnd -> "(${actual.src()}) Expected the end, got [${actual.value}] (${actual.type})"
-        } },
-        { when(this) {
-            ErrorData.Fix -> emptyList()
-            ErrorData.EmptyCombine -> TODO()
-            is ErrorData.Filtered<*> -> TODO()
-            is ErrorData.Named -> listOf(data)
-            is ErrorData.Multiple -> errors.toList()
-            is ErrorData.ExpectedName -> emptyList()
-            is ErrorData.ExpectedEnd -> emptyList()
-        } }
-)
+private fun <I> ErrorData<I>.prettyList() : List<String> = when (this) {
+    ErrorData.Fix -> emptyList()
+    is ErrorData.ExpectedName -> listOf("'$expected'")
+    is ErrorData.ExpectedEnd -> emptyList()
+    is ErrorData.Filtered<*> -> listOf(filterName)
+    is ErrorData.Named -> data.prettyList().map {
+        "$it for [$name]"
+    }
+    is ErrorData.Multiple -> errors.flatMap { it.prettyList() }
+}
+
+private fun ErrorData<Token<SimplyTypedLambdaToken>>.findActual(): Token<SimplyTypedLambdaToken>? = when (this) {
+    ErrorData.Fix -> null
+    is ErrorData.ExpectedName -> actual
+    is ErrorData.ExpectedEnd -> actual
+    is ErrorData.Filtered<*> -> null
+    is ErrorData.Named -> data.findActual()
+    is ErrorData.Multiple -> errors.asSequence().map { it.findActual() }.firstOrNull { it != null }
+}
+
+//TODO error handling for 'λ x : Nat'
 
 fun handleError(result : ParseResult.Error<Token<SimplyTypedLambdaToken>>) : Nothing {
-    System.err.println("Error parsing:")
-    val prettyError = result.error /* .max().second */.strip(false)?.pretty()
-    println(prettyError ?: result.error.pretty())
+    // error handling strategy
+    // 1. Only keep the most relevant name
+    val named = result.error.keepOneName().second
+    // 2. Only show errors for the most progressed parser
+    val max = named.mapByPosition().maxBy { it.key }!!
+    // 3. All errors are "expected something" errors. Extract the actual token:
+    val actual = max.value.findActual()
+
+    System.err.println("Error at ${max.key}. Found '${actual?.value}', but expected one of: ")
+
+    // 4. Now show the errors
+    max.value.prettyList().forEach {
+        System.err.println("- $it")
+    }
+
     exitProcess(1)
 }

@@ -12,6 +12,7 @@ class Filter<I, O>(
         is ParseResult.Ok.Single -> if (cond(result.t)) result else ParseResult.Error(ErrorData.Filtered(result.t, name))
         is ParseResult.Ok.Multiple -> ParseResult.Ok.Multiple.nonEmpty(result.set.filter(cond).toSet()) //TODO error prop
         is ParseResult.Error -> result
+        is ParseResult.Ok.Maybe<*, *> -> TODO()
     }
 
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {

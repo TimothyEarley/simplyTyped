@@ -10,7 +10,7 @@ class Named<I, O>(
         return result
     }
 
-    override fun deriveNull(): ParseResult<I, O> = p.deriveNull().mapError { ParseResult.Error(ErrorData.Named(name, it.error)) }
+    override fun deriveNull(): ParseResult<I, O> = p.deriveNull().mapError { ErrorData.Named(name, it) }
 
     override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {
         p = p.compact(seen)

@@ -41,6 +41,10 @@ fun ParseResult<Token<SimplyTypedLambdaToken>, TypedTerm>.handleResult() : Typed
 		set.first()
 	}
 	is ParseResult.Error -> handleError(this)
+	is ParseResult.Ok.Maybe<*, TypedTerm> -> {
+		println("Hidden error $error")
+		ok.handleResult()
+	}
 }
 
 fun treeVis(t : TypedTerm): TypedTerm = t.also {

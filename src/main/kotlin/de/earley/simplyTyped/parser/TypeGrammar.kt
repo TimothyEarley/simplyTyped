@@ -72,13 +72,18 @@ object TypeGrammar {
 	}
 
 	val newType : Parser<Token<SimplyTypedLambdaToken>, Type> = recursive { type ->
+		//TODO name? error messages need to be slightly improved to show the name instead of [Identifier]
 		fun baseType(name : String, type : Type) = token(Identifier).matches(name).map { type }
 
-		val parenType = token(OpenParen).void() + type + token(ClosedParen).void()
+		val parenType = named("paren type") {
+			token(OpenParen).void() + type + token(ClosedParen).void()
+		}
 		val arrowType = named("arrow") {
 			(type + token(Arrow).void() + type).rightAssoc().map(Type::FunctionType)
 		}
-		val userType = token(Identifier).string().map(Type::UserType)
+		val userType = named("user type") {
+			token(Identifier).string().map(Type::UserType)
+		}
 
 		 val recordType = named("record type") {
 			token(OpenBracket).void() +

@@ -14,6 +14,7 @@ class Assoc<I, O>(
                 if (left) result.set.first() else result.set.last()
         )
         is ParseResult.Error -> result
+        is ParseResult.Ok.Maybe<*, O> -> ParseResult.Ok.Maybe(applyAssoc(result.ok) as ParseResult.Ok<O>, result.error)
     }
 
     override fun derive(i: I): Parser<I, O> = Assoc(parser.derive(i), left)
