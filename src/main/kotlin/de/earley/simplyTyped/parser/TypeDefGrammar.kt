@@ -39,7 +39,17 @@ object TypeDefGrammar {
 				term
 		).leftAssoc().map { src, name, type, body -> TypedTerm.TypeDef(name, type, body, src) }
 
-		simpleTypeDef
+		val recTypeDef = named("rec type def") {
+			token(RecTypeDef).src() +
+					token(Identifier).string() +
+					token(Equals).void() +
+					TypeGrammar.newType +
+					token(In).void() +
+					term
+		}.map { src, name, type, body -> TypedTerm.TypeDef(name, Type.RecursiveType(name, type), body, src) }
+
+
+		simpleTypeDef or recTypeDef
 
 	}
 
