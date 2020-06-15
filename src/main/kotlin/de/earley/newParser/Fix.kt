@@ -42,13 +42,17 @@ private class Delay<I, O>(
 
     override fun derive(i: I): Parser<I, O> = derivative.derive(i)
     override fun deriveNull(): ParseResult<I, O> = derivative.deriveNull()
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = derivative.compact(seen)
+    override fun compact(seen: MutableSet<Parser<*, *>>, disregardErrors: Boolean): Parser<I, O> =
+            derivative.compact(seen, disregardErrors)
 
     override fun toDot(seen: MutableSet<Parser<*, *>>) = ifNotSeen(seen, "") {
         dotNode("Delay")
     }
 
     override fun toString(): String = "Delay[$input]($parser)"
+    override fun size(seen: MutableSet<Parser<*, *>>): Int = ifNotSeen(seen, 1) {
+        1 + parser.size(seen)
+    }
 }
 
 private class PairMap<A, B, C> {

@@ -5,6 +5,7 @@ import de.earley.newParser.ParseResult
 import de.earley.parser.SourcePosition
 import de.earley.parser.Token
 import de.earley.parser.src
+import de.earley.simplyTyped.Diagnostics
 import de.earley.simplyTyped.treeString
 import kotlin.system.exitProcess
 
@@ -64,7 +65,7 @@ private fun ErrorData<Token<SimplyTypedLambdaToken>>.findActual(): Token<SimplyT
 
 //TODO error handling for 'λ x : Nat'
 
-fun handleError(result : ParseResult.Error<Token<SimplyTypedLambdaToken>>) : Nothing {
+fun handleError(result : ParseResult.Error<Token<SimplyTypedLambdaToken>>, diagnostics: Diagnostics) : Nothing {
     // error handling strategy
     // 1. Only keep the most relevant name
     val named = result.error.keepOneName().second
@@ -73,12 +74,12 @@ fun handleError(result : ParseResult.Error<Token<SimplyTypedLambdaToken>>) : Not
     // 3. All errors are "expected something" errors. Extract the actual token:
     val actual = max.value.findActual()
 
-    System.err.println("Error at ${max.key}. Found '${actual?.value}', but expected one of: ")
+    diagnostics.error("Error at ${max.key}. Found '${actual?.value}', but expected one of: ")
 
     // 4. Now show the errors
-    max.value.prettyList().forEach {
-        System.err.println("- $it")
-    }
+   val msg =  max.value.prettyList().joinToString(separator = "\n") { "- $it" }
+
+    diagnostics.error(msg)
 
     exitProcess(1)
 }

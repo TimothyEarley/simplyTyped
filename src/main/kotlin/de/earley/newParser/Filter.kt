@@ -15,8 +15,8 @@ class Filter<I, O>(
         is ParseResult.Ok.Maybe<*, *> -> TODO()
     }
 
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {
-        p = p.compact(seen)
+    override fun compact(seen: MutableSet<Parser<*, *>>, disregardErrors: Boolean): Parser<I, O> = ifNotSeen(seen, this) {
+        p = p.compact(seen, disregardErrors)
         this
     }
 
@@ -25,6 +25,9 @@ class Filter<I, O>(
     }
 
     override fun toString(): String = "filter[$name]($p)"
+    override fun size(seen: MutableSet<Parser<*, *>>): Int = ifNotSeen(seen, 1) {
+        1 + p.size(seen)
+    }
 }
 
 fun <I, O> Parser<I, O>.filter(name : String, cond : (O) -> Boolean) : Parser<I, O> = Filter(this, cond, name)

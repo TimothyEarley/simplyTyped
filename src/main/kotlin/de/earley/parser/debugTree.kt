@@ -46,29 +46,3 @@ private fun toTree(chain: List<Parser<*, *>>): Pair<Tree<String>, List<Parser<*,
 		else -> TODO(top.javaClass.toGenericString())
 	}
 }
-
-fun main() {
-
-
-	Tree(
-		"a",
-		listOf(
-			Tree(
-				"b",
-				listOf(
-					Tree(
-						"c",
-						listOf(
-							Tree("d", emptyList()),
-							Tree("e", emptyList())
-						)
-					),
-					Tree("f", emptyList())
-				)
-			)
-		)
-	).also {
-		println(it)
-	}
-
-}

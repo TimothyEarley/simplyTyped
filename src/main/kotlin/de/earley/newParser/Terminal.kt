@@ -5,7 +5,7 @@ import de.earley.parser.Token
 import de.earley.parser.TokenType
 import de.earley.parser.src
 
-data class Terminal<I>(val name: String, val check: (I) -> Boolean) : Parser<I, I> {
+class Terminal<I>(val name: String, val check: (I) -> Boolean) : Parser<I, I> {
     override fun derive(i: I) : Parser<I, I> =
         if (check(i))
             epsilon(i)
@@ -14,12 +14,13 @@ data class Terminal<I>(val name: String, val check: (I) -> Boolean) : Parser<I, 
 
     override fun deriveNull(): ParseResult<I, I> = ParseResult.Error(ErrorData.ExpectedName(name, null))
 
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, I> = this
+    override fun compact(seen: MutableSet<Parser<*, *>>, disregardErrors: Boolean): Parser<I, I> = this
     override fun toDot(seen: MutableSet<Parser<*, *>>) = ifNotSeen(seen, "") {
         dotNode(name)
     }
 
-    override fun toString(): String = name
+    override fun toString(): String = "<$name>"
+    override fun size(seen: MutableSet<Parser<*, *>>): Int = 1
 }
 
 fun char(c : Char) : Parser<Char, Char> = Terminal(c.toString()) { it == c }

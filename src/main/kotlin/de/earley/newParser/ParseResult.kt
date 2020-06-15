@@ -28,11 +28,6 @@ fun <I, O> ParseResult<I, O>.set() : Set<O> = when (this) {
 sealed class ErrorData<out I> {
 
     /**
-     * How far along the parsing the error occoured. Used to find the best error.
-     */
-//    abstract val progress : Int
-
-    /**
      * Start of the fix recursion.
      */
     object Fix : ErrorData<Nothing>()
@@ -54,7 +49,9 @@ sealed class ErrorData<out I> {
         override fun equals(other: Any?): Boolean =
                 if (other !is Multiple<*>) false
                 else errors == other.errors
-        override fun hashCode(): Int = Objects.hash(errors)
+
+        private val hash by lazy { Objects.hash(errors) }
+        override fun hashCode(): Int = hash
 
         override fun toString(): String = "ErrorData.Multiple(${errors.joinToString()})"
     }

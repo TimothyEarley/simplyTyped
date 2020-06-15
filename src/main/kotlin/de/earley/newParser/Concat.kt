@@ -32,18 +32,15 @@ class Concat<I, A, B> internal constructor(
         }
     }
 
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, Pair<A, B>> {
-        if (! seen.contains(this)) {
-            seen.add(this)
-            p1 = p1.compact(seen)
-            p2 = p2.compact(seen)
-        }
+    override fun compact(seen: MutableSet<Parser<*, *>>, disregardErrors: Boolean): Parser<I, Pair<A, B>> = ifNotSeen<Parser<I, Pair<A, B>>>(seen, this) {
+        p1 = p1.compact(seen, disregardErrors)
+        if (p1 is Empty) return@ifNotSeen p1 as Empty //TODO error msgs
 
-        return when {
-            p1 is Empty -> p1 as Empty //TODO error msgs
-            p2 is Empty -> p2 as Empty // TODO compaction with p1 = Epsilon
-            else -> this
-        }
+        p2 = p2.compact(seen, disregardErrors)
+        if (p2 is Empty) return@ifNotSeen p2 as Empty
+
+        // TODO compaction with p1 = Epsilon
+        this
     }
 
     override fun toDot(seen: MutableSet<Parser<*, *>>) = ifNotSeen(seen, "") {
@@ -52,6 +49,9 @@ class Concat<I, A, B> internal constructor(
 
     override fun toString(): String = "($p1 + $p2)"
 
+    override fun size(seen: MutableSet<Parser<*, *>>): Int = ifNotSeen(seen, 1) {
+        1 + p1.size(seen) + p2.size(seen)
+    }
 }
 
 private fun <I, A, B> doPlus(a : Parser<I, A>, b : Parser<I, B>) : Parser<I, Pair<A, B>> = when {

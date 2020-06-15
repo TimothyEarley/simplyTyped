@@ -1,14 +1,14 @@
 package de.earley.newParser
 
-data class Reduce<I, A, B>(
+class Reduce<I, A, B>(
         private var p : Parser<I, A>,
         private val name : String,
         private val reduce : (A) -> B
 ) : Parser<I, B> {
     override fun derive(i: I) = Reduce(p.derive(i), name, reduce)
     override fun deriveNull(): ParseResult<I, B> = p.deriveNull().map(reduce)
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, B> = ifNotSeen(seen, this) {
-        val compact = p.compact(seen)
+    override fun compact(seen: MutableSet<Parser<*, *>>, disregardErrors: Boolean): Parser<I, B> = ifNotSeen(seen, this) {
+        val compact = p.compact(seen, disregardErrors)
         val result : Parser<I, B> = when {
             compact is Empty<I> -> compact
             //TODO can I merge reduces? Typing it is difficult
@@ -28,6 +28,9 @@ data class Reduce<I, A, B>(
     override fun dotName(): String = p.dotName()
     override fun toDot(seen: MutableSet<Parser<*, *>>) = p.toDot(seen)
     override fun toString(): String = "$name($p)"
+    override fun size(seen: MutableSet<Parser<*, *>>): Int = ifNotSeen(seen, 1) {
+        1 + p.size(seen)
+    }
 }
 
 fun <I, A, B> Parser<I, A>.map(f : (A) -> B) : Parser<I, B> = Reduce(this, "map", f)

@@ -4,6 +4,7 @@ class Alternative<I, O> internal constructor(
         var parsers : List<Parser<I, O>>
 ) : Fix<I, O>() {
 
+    //TODO performance
     private val hiddenErrors : MutableList<ErrorData<I>> = mutableListOf()
 
     override fun innerDerive(i: I) = Alternative(parsers.map { it.derive(i) }).also {
@@ -14,25 +15,24 @@ class Alternative<I, O> internal constructor(
         return (parsers.map { it.deriveNull() } + (hiddenErrors.map { ParseResult.Error(it) })).combine()
     }
 
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen(seen, this) {
+    override fun compact(seen: MutableSet<Parser<*, *>>, disregardErrors: Boolean): Parser<I, O> = ifNotSeen(seen, this) {
         // assume all are flattened already
-        val (good, bad) = parsers.map { it.compact(seen) }
+        val (good, bad) = parsers.map { it.compact(seen, disregardErrors) }
                 .partition { it !is Empty }
 
         //TODO use same abstraction as [combine]
-        //TODO we loose error info here
+        //TODO we loose error info here (if hiddenErrors is set already)
         @Suppress("UNCHECKED_CAST") // checked by partition
         when {
             good.isEmpty() -> Empty((bad as List<Empty<I>>).map { it.error }.combineErrors())
-            bad.isEmpty() -> when {
-                good.size == 1 -> good.first()
+            bad.isEmpty() || disregardErrors -> when (good.size) {
+                1 -> good.first()
                 else -> {
                     parsers = good
                     this
                 }
             }
             else -> {
-                //TODO this removes compaction when there is only one parser
                 hiddenErrors.addAll(bad.map { (it as Empty).error.error })
                 parsers = good
                 this
@@ -67,6 +67,10 @@ class Alternative<I, O> internal constructor(
     }
 
     override fun toString(): String = "(" + parsers.joinToString(" or ") + ")"
+
+    override fun size(seen: MutableSet<Parser<*, *>>): Int = ifNotSeen(seen, 1) {
+        1 + parsers.sumBy { it.size(seen) }
+    }
 }
 
 fun <I, O> or(vararg parsers : Parser<I, O>): Parser<I, O> {

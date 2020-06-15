@@ -1,19 +1,9 @@
-# 1
-
-rectype Counter = {
-	get: Nat,
-	inc: Unit -> Counter,
-	dec: Unit -> Counter
-} in
-
-fold
-letrec mkCounter : Nat -> Counter = λ v : Nat . {
-    get = v,
-	inc = (λ_:Unit . (mkCounter (succ v))),
-	dec = (λ_:Unit .  (mkCounter (pred v)))
-}
+letrec add : Nat -> Nat -> Nat = λ n : Nat . λ m : Nat .
+    if iszero n then m else succ (add (pred n) m)
 in
-
-(
-	mkCounter 0
-).inc.inc.suc.get
+letrec times : Nat -> Nat -> Nat = λ n : Nat . λ m : Nat .
+    if iszero n then 0 else add m (times (pred n) m)
+in
+letrec factorial : Nat -> Nat = λ n : Nat .
+ if iszero n then 1 else times n (factorial (pred n))
+in factorial 4

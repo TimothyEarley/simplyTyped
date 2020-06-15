@@ -89,7 +89,7 @@ object TermGrammar {
 			app or
 			variable or
 			UnitParser.newUnit
-		}
+		}.leftAssoc()
 	}
 
 }

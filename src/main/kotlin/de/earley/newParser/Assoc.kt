@@ -19,8 +19,8 @@ class Assoc<I, O>(
 
     override fun derive(i: I): Parser<I, O> = Assoc(parser.derive(i), left)
 
-    override fun compact(seen: MutableSet<Parser<*, *>>): Parser<I, O> = ifNotSeen<Parser<I, O>>(seen, this) {
-        parser = parser.compact(seen)
+    override fun compact(seen: MutableSet<Parser<*, *>>, disregardErrors: Boolean): Parser<I, O> = ifNotSeen<Parser<I, O>>(seen, this) {
+        parser = parser.compact(seen, disregardErrors)
         if (parser is Empty) parser
         else this
     }
@@ -30,6 +30,9 @@ class Assoc<I, O>(
     }
 
     override fun toString(): String = if (left) "l($parser)" else "r($parser)"
+    override fun size(seen: MutableSet<Parser<*, *>>): Int = ifNotSeen(seen, 1) {
+        1 + parser.size(seen)
+    }
 }
 
 /**

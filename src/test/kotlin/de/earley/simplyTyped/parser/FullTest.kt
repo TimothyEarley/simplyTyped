@@ -1,5 +1,6 @@
 package de.earley.simplyTyped.parser
 
+import de.earley.simplyTyped.PrintDiagnostics
 import de.earley.simplyTyped.processSource
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -13,11 +14,9 @@ internal class FullTest : StringSpec({
             val source = data.bufferedReader().readLines()
             val expected = source.first().removePrefix("#")
             val test = source.joinToString("\n")
-            processSource(test) shouldBe processSource(expected)
+            processSource(test, PrintDiagnostics) shouldBe processSource(expected, PrintDiagnostics)
         }
     }
-
-
 
 })
 
