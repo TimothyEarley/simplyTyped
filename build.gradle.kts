@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	kotlin("jvm") version "1.3.50"
+	id("me.champeau.gradle.jmh") version "0.5.0"
 }
 
 group = "de.earley"
@@ -27,4 +28,9 @@ tasks.withType<KotlinCompile>().all {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+jmh {
+	fork = 1
+	isIncludeTests = false
 }
